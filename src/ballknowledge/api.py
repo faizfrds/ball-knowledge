@@ -8,6 +8,7 @@ is half the pitch: it is what lets anyone check the claim that this is cheap.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -125,9 +126,15 @@ def _fit(text: str, top_k: int) -> dict:
         model=os.environ.get("BK_LLM_MODEL", "gpt-5.2"), temperature=0,
         messages=[{"role": "user", "content":
             f"Here are a student's documents (resume, notes, project write-ups):\n\n"
-            f"{text[:12000]}\n\nWrite a one-paragraph research interest profile, then "
-            f"a single search query that would find MIT research groups they should "
-            f'join. JSON: {{"profile": "...", "query": "..."}}'}],
+            f"{text[:12000]}\n\n"
+            f"Write a one-paragraph research interest profile, then a search query "
+            f"describing the research they should join.\n\n"
+            f"The query is read by a semantic search engine over paper abstracts, "
+            f"NOT by a web search engine. Write it as a plain English description of "
+            f"the research itself, in one or two sentences. Do NOT use site:, "
+            f"quotation marks, OR, AND, parentheses, or any other search operators, "
+            f"and do not mention MIT -- the corpus is already only MIT papers.\n\n"
+            f'Return JSON: {{"profile": "...", "query": "..."}}'}],
         response_format={"type": "json_object"})
     u.add(r)
     prof = json.loads(r.choices[0].message.content)

@@ -12,8 +12,11 @@ import { getConstituentBundle, listConstituents } from "./data-access.js";
 import { loadServerEnv, hasJevKey } from "./env.js";
 import { DEFAULT_CRITERION, EVIDENCE_VERSION, SCORING_VERSION } from "./givecampus/criterion.js";
 import { JEV_MODEL } from "./givecampus/jev.js";
-import { buildWorklist } from "./givecampus/worklist.js";
-import { createJob, getJob, listJobs, runJob } from "./givecampus/jobs.js";
+import { FROZEN_RANKING_ID, FROZEN_RANKING_VERSION } from "./givecampus/frozen-lr.js";
+import { buildWorklist, type WorklistEntry } from "./givecampus/worklist.js";
+import { createJob, explainTopEntries, getJob, listJobs, runJob } from "./givecampus/jobs.js";
+import { compileRubric } from "./llm/rubric.js";
+import { hasOpenAiKey } from "./llm/config.js";
 
 loadServerEnv();
 
@@ -96,6 +99,33 @@ function serveWeb(req: http.IncomingMessage, res: http.ServerResponse): boolean 
   return true;
 }
 
+/** Map one engine entry onto the web client's RankedRow shape (tolerated fields only). */
+function toUiRow(e: WorklistEntry): Record<string, unknown> {
+  const triggers = [...e.whyNow, ...e.reviewReasons].filter(Boolean);
+  return {
+    rank: e.rank,
+    constituentId: e.constituentId,
+    displayName: e.name,
+    primaryAffiliation: null,
+    classYear: null,
+    city: e.city,
+    state: e.state,
+    eligibility: e.eligibleForSolicit ? "eligible" : "solicit_restricted",
+    priorityIndex: e.priorityIndex,
+    rankScore: e.rankScore,
+    rankingMethod: e.rankingMethod,
+    action: e.action,
+    actionRationale: triggers.length > 0 ? triggers.join("; ") : "Held for review — see evidence refs.",
+    disallowedActions: [],
+    whyNow: e.whyNow.length > 0 ? e.whyNow.join("; ") : "No temporal trigger as of T0.",
+    evidenceCompleteness: e.completeness,
+    reviewNeeded: { needed: e.reviewNeeded, reasons: e.reviewReasons },
+    criteria: [],
+    missing: e.missing.map((m) => ({ field: m, implication: "Engine missing-data panel — flagged for research." })),
+    evidenceRefs: e.evidenceRefs,
+  };
+}
+
 async function router(
   req: http.IncomingMessage,
   res: http.ServerResponse,
@@ -116,9 +146,12 @@ async function router(
       evidenceVersion: EVIDENCE_VERSION,
       criterion: DEFAULT_CRITERION.id,
       criterionVersion: DEFAULT_CRITERION.version,
+      rankingMethod: FROZEN_RANKING_ID,
+      rankingVersion: FROZEN_RANKING_VERSION,
       model: JEV_MODEL,
-      // Boolean only — the key value is never exposed.
+      // Booleans only — key values are never exposed.
       jevAvailable: hasJevKey(),
+      llmAvailable: hasOpenAiKey(),
     });
     return;
   }
@@ -148,6 +181,9 @@ async function router(
   }
 
   // Synchronous worklist (small pages; larger scans belong in jobs).
+  // Default ordering is the frozen dev-selected ranker (rank only).
+  // ?explainTop=1 explains the returned top<=20 in one batched call with
+  // safe fallback when OpenAI is missing; usage lands in receipt.llm*.
   if (req.method === "GET" && url.pathname === "/api/worklist") {
     const db = openDb(dbPath);
     try {
@@ -161,12 +197,40 @@ async function router(
         if (v) filter[k] = v;
       }
       const result = await buildWorklist(db, filter, undefined, { enrichWithJev: false });
-      json(res, 200, result);
+      if (url.searchParams.get("explainTop") === "1") {
+        const explained = await explainTopEntries(result);
+        result.receipt.llmCalls = explained.llm.calls;
+        result.receipt.llmInputTokens = explained.llm.inputTokens;
+        result.receipt.llmOutputTokens = explained.llm.outputTokens;
+        result.receipt.llmModel = explained.llm.model;
+        result.receipt.llmFallback = explained.llm.fallback;
+        json(res, 200, { ...result, explanations: explained.explanations, llm: explained.llm });
+      } else {
+        json(res, 200, result);
+      }
     } catch (err) {
       json(res, 400, { error: (err as Error).message });
     } finally {
       db.close();
     }
+    return;
+  }
+
+  // NL -> typed rubric (one LLM call; safe default fallback on any error,
+  // including a missing OPENAI_API_KEY — never throws for content reasons).
+  if (req.method === "POST" && url.pathname === "/api/rubric") {
+    let body: Record<string, unknown>;
+    try {
+      body = (await readJsonBody(req)) as Record<string, unknown>;
+    } catch (err) {
+      json(res, 400, { error: (err as Error).message });
+      return;
+    }
+    const outcome = await compileRubric(
+      typeof body.query === "string" ? body.query : "",
+      Array.isArray(body.availableFields) ? (body.availableFields as { name: string; kind: string }[]) : [],
+    );
+    json(res, 200, outcome);
     return;
   }
 
@@ -179,7 +243,8 @@ async function router(
       return;
     }
     const enrichWithJev = body.enrichWithJev === true;
-    const job = createJob(body.filter ?? {}, body.criterion ?? undefined, enrichWithJev);
+    const explainTop = body.explainTop === true;
+    const job = createJob(body.filter ?? {}, body.criterion ?? undefined, enrichWithJev, explainTop);
     // Background-ish: start without awaiting; client polls GET below.
     const db = openDb(dbPath);
     runJob(db, job.id).finally(() => db.close());
@@ -208,6 +273,60 @@ async function router(
     json(res, 200, job);
     return;
   }
+  // ---- Web-client aliases (Giving Day Triage Board, web/js/api.js) ----
+  // Thin mapping onto the same job engine above: same deterministic
+  // eligibility/actions/evidence, same frozen rank order, same receipts.
+  // No new scoring, no new ranking, no LLM here. The UI probes
+  // POST /api/worklists, polls GET /api/worklists/:id, and falls back to
+  // polling when the SSE stream 404s — all tolerated below.
+  if (req.method === "POST" && url.pathname === "/api/worklists") {
+    let body: Record<string, unknown>;
+    try {
+      body = (await readJsonBody(req)) as Record<string, unknown>;
+    } catch (err) {
+      json(res, 400, { error: (err as Error).message });
+      return;
+    }
+    if (body.probe === true) {
+      json(res, 200, { ok: true });
+      return;
+    }
+    const filters = (body.filters ?? {}) as Record<string, unknown>;
+    const cities = Array.isArray(filters.cities) ? (filters.cities as unknown[]) : [];
+    const affils = Array.isArray(filters.affiliationTypes) ? (filters.affiliationTypes as unknown[]) : [];
+    const filter: Record<string, unknown> = {
+      asOf: typeof body.asOf === "string" ? body.asOf : AS_OF_DATE,
+      limit: Math.min(Number(body.limit ?? 20) || 20, 50),
+      offset: 0,
+    };
+    if (typeof cities[0] === "string" && cities[0]) filter.city = cities[0];
+    if (typeof affils[0] === "string" && affils[0]) filter.affiliationType = affils[0];
+    const job = createJob(filter, undefined, false, false);
+    const db = openDb(dbPath);
+    runJob(db, job.id).finally(() => db.close());
+    json(res, 202, { jobId: job.id, status: job.status });
+    return;
+  }
+  const mw = url.pathname.match(/^\/api\/worklists\/([\w-]+)$/);
+  if (req.method === "GET" && mw) {
+    const job = getJob(mw[1]!);
+    if (!job) {
+      json(res, 404, { error: "job_not_found" });
+      return;
+    }
+    json(res, 200, {
+      jobId: job.id,
+      status: job.status === "done" ? "complete" : job.status,
+      ranked: (job.result?.entries ?? []).map(toUiRow),
+      excluded: [],
+      receipt: job.result?.receipt ?? null,
+      cache: { hit: false, key: job.id },
+      progress: job.result ? { eligibleN: job.result.receipt.eligible } : null,
+      ...(job.explanations ? { explanations: job.explanations } : {}),
+    });
+    return;
+  }
+
   const mc = url.pathname.match(/^\/api\/cost-receipt$/);
   if (req.method === "GET" && mc) {
     const jobId = url.searchParams.get("jobId");

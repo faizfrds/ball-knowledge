@@ -32,12 +32,27 @@ never expected revenue.
 
 ## API (`src/server.ts`)
 
-- `GET /api/givecampus/health` — versions + `jevAvailable` boolean (never the key)
-- `GET /api/worklist?asOf&limit&city&state&affiliationType` — sync page (limit ≤ 50)
-- `POST /api/worklist/jobs` → `{jobId}` (background-ish; poll below)
+- `GET /api/givecampus/health` — versions + `jevAvailable` / `llmAvailable` booleans (never keys); includes `rankingMethod` / `rankingVersion`
+- `GET /api/worklist?asOf&limit&city&state&affiliationType` — sync page (limit ≤ 50); `?explainTop=1` adds one batched top≤20 explanation with safe fallback, usage in `receipt.llm*`
+- `POST /api/worklist/jobs` (`{filter, criterion?, enrichWithJev?, explainTop?}`) → `{jobId}` (background-ish; poll below)
 - `GET /api/worklist/jobs`, `GET /api/worklist/jobs/:id`, `GET /api/cost-receipt?jobId=`
+- `POST /api/rubric` (`{query, availableFields}`) — NL → typed rubric, one LLM call, safe default fallback (never throws for content)
+- Web-client aliases for `web/js/api.js`: `POST /api/worklists` (probe-aware; maps UI payload to the same job engine) and `GET /api/worklists/:id` (engine entries mapped to the UI RankedRow shape; SSE stream intentionally absent — the UI falls back to polling)
 - `/` + non-`/api` paths serve `web/` statically (read-only; UI owned elsewhere)
 - `.env.local` loads server-side only (`src/env.ts`); values never enter responses
+
+## Ordering + receipts
+
+- Default order is the frozen dev-selected logistic ranker
+  (`src/givecampus/frozen-lr.ts`, `trained_lr_lr_f`, rank-only `rankScore`
+  in (0,1) over the six code priority subscores, unknowns → 0).
+  Deterministic eligibility/actions/evidence are untouched; the 0–100
+  priority index is retained per row for display. No winner claims —
+  held-out numbers are report-only and live outside this slice.
+- Every receipt identifies `rankingMethod` / `rankingVersion`, Jev usage
+  (`jevCalls`, `jevCacheHits`, `inputTokens` / `outputTokens`), and LLM
+  explainer usage (`llmCalls`, `llmInputTokens`, `llmOutputTokens`,
+  `llmModel`, `llmFallback`).
 
 ## Tests
 

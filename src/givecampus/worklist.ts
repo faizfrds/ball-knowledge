@@ -21,6 +21,11 @@ import {
 } from "./jev.js";
 import { MemoryCache } from "./cache.js";
 import {
+  FROZEN_RANKING_ID,
+  FROZEN_RANKING_VERSION,
+  frozenLrRankScore,
+} from "./frozen-lr.js";
+import {
   getActivities,
   getAffiliations,
   getAttendanceAsOf,
@@ -52,6 +57,12 @@ export interface WorklistEntry {
   permittedChannel: string;
   /** 0–100 rank-only index (NOT a probability). */
   priorityIndex: number | null;
+  /** 1-based global rank under the default frozen ordering. */
+  rank: number;
+  /** Ordinal rank score in (0,1) from the frozen model — rank only, never probability. */
+  rankScore: number;
+  /** Ranking method id (always the frozen default unless explicitly overridden). */
+  rankingMethod: string;
   completeness: number;
   unknowns: string[];
   reviewNeeded: boolean;
@@ -69,6 +80,9 @@ export interface CostReceipt {
   criterionVersion: string;
   criterionHash: string;
   scoringVersion: string;
+  /** Default ordering identity: frozen dev-selected ranker (rank only). */
+  rankingMethod: string;
+  rankingVersion: string;
   asOf: string;
   scanned: number;
   eligible: number;
@@ -79,6 +93,12 @@ export interface CostReceipt {
   inputTokens: number;
   outputTokens: number;
   model: string;
+  /** LLM explainer usage (explainRanked over final top<=20 only). */
+  llmCalls: number;
+  llmInputTokens: number;
+  llmOutputTokens: number;
+  llmModel: string | null;
+  llmFallback: boolean;
 }
 
 export interface WorklistResult {
@@ -331,6 +351,20 @@ export async function buildWorklist(
       }
     }
 
+    // Default ordering: frozen dev-selected logistic ranker over the six
+    // code priority subscores (unknowns -> 0, matching benchmark treatment).
+    // Deterministic eligibility/actions/evidence above are untouched; the
+    // 0–100 priority index is retained per row for display. rankScore is
+    // ORDINAL rank-only, never a probability.
+    const rankScore = frozenLrRankScore({
+      r: score.components.r.value ?? 0,
+      f: score.components.f.value ?? 0,
+      m: score.components.m.value ?? 0,
+      e: score.components.e.value ?? 0,
+      n: score.components.n.value ?? 0,
+      c: score.components.c.value ?? 0,
+    });
+
     entries.push({
       constituentId: row.id,
       name: row.preferred_name,
@@ -344,6 +378,9 @@ export async function buildWorklist(
       alsoConsider,
       permittedChannel: decision.permittedChannel ?? "none",
       priorityIndex: score.index,
+      rank: 0, // assigned after the frozen-order sort below
+      rankScore,
+      rankingMethod: FROZEN_RANKING_ID,
       completeness: score.completeness,
       unknowns: score.unknowns,
       reviewNeeded,
@@ -355,7 +392,13 @@ export async function buildWorklist(
     });
   }
 
-  entries.sort((a, b) => (b.priorityIndex ?? -1) - (a.priorityIndex ?? -1) || a.constituentId - b.constituentId);
+  // Default order: frozen rank score desc; ties break by constituent id
+  // ascending (ids are permuted — tiebreak only). Rank is global (1-based)
+  // so paged responses keep stable positions.
+  entries.sort((a, b) => (b.rankScore !== a.rankScore ? b.rankScore - a.rankScore : a.constituentId - b.constituentId));
+  entries.forEach((e, i) => {
+    e.rank = i + 1;
+  });
   const total = entries.length;
   const paged = entries.slice(filter.offset, filter.offset + filter.limit);
   void total;
@@ -366,6 +409,8 @@ export async function buildWorklist(
     criterionVersion: criterion.version,
     criterionHash: criterionHash(criterion),
     scoringVersion: criterion.scoringVersion,
+    rankingMethod: FROZEN_RANKING_ID,
+    rankingVersion: FROZEN_RANKING_VERSION,
     asOf,
     scanned: candidates.length,
     eligible: entries.length,
@@ -376,6 +421,11 @@ export async function buildWorklist(
     inputTokens,
     outputTokens,
     model: "jev-1.13.0",
+    llmCalls: 0,
+    llmInputTokens: 0,
+    llmOutputTokens: 0,
+    llmModel: null,
+    llmFallback: false,
   };
   return { entries: paged, receipt, excluded };
 }

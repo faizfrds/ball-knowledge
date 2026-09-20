@@ -1,0 +1,44 @@
+{
+  "kind": "post-hoc-targeted-scenario-sensitivity-analysis",
+  "warning": "Not the overall benchmark result. Stewardship and upgrade queries were selected after inspecting full results because Jev improved top-20 hits on them. The lapsed-donor and reunion queries are reported and not hidden.",
+  "asOf": "2025-08-31",
+  "eligibleN": 14052,
+  "includedQueries": ["q2_stewardship_before_ask", "q4_upgrade_ask_review"],
+  "excludedButReportedQueries": ["q1_lapsed_loyal_engaged", "q3_reunion_reengagement"],
+  "weighting": "Equal weight per included query; top-20 hits summed across 40 slots; NDCG@20 and Recall@2k averaged across the two included queries.",
+  "systems": {
+    "semanticOnly": {
+      "hitsAt20": 10,
+      "top20Slots": 40,
+      "precisionAt20": 0.25,
+      "meanNdcgAt20": 0.080277,
+      "meanRecallAt2000": 0.242086
+    },
+    "semanticPlusBm25": {
+      "hitsAt20": 17,
+      "top20Slots": 40,
+      "precisionAt20": 0.425,
+      "meanNdcgAt20": 0.118482,
+      "meanRecallAt2000": 0.1907
+    },
+    "semanticPlusBm25Jev": {
+      "hitsAt20": 28,
+      "top20Slots": 40,
+      "precisionAt20": 0.7,
+      "meanNdcgAt20": 0.3132,
+      "meanRecallAt2000": 0.1907
+    }
+  },
+  "allFourQueryContext": {
+    "semanticOnly": { "hitsAt20": 40, "meanNdcgAt20": 0.314421 },
+    "semanticPlusBm25": { "hitsAt20": 43, "meanNdcgAt20": 0.305812 },
+    "semanticPlusBm25Jev": { "hitsAt20": 39, "meanNdcgAt20": 0.270642 }
+  },
+  "queryHitsAt20": {
+    "q1_lapsed_loyal_engaged": { "semanticOnly": 12, "semanticPlusBm25": 9, "semanticPlusBm25Jev": 1 },
+    "q2_stewardship_before_ask": { "semanticOnly": 0, "semanticPlusBm25": 0, "semanticPlusBm25Jev": 9 },
+    "q3_reunion_reengagement": { "semanticOnly": 18, "semanticPlusBm25": 17, "semanticPlusBm25Jev": 10 },
+    "q4_upgrade_ask_review": { "semanticOnly": 10, "semanticPlusBm25": 17, "semanticPlusBm25Jev": 19 }
+  },
+  "containsConstituentIds": false
+}

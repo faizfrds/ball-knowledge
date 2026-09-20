@@ -16,6 +16,8 @@ export interface PipelineCompileOutcome {
   telemetry: LlmTelemetry | null;
 }
 
+export const DEFAULT_RUBRIC_PLANNER_MODEL = "gpt-5.6-luna";
+
 const SYSTEM_PROMPT = [
   "Compile one GiveCampus fundraising query into one strict JSON rubric.",
   "The model receives only the query and field schema; it never receives candidate records.",
@@ -54,7 +56,7 @@ export async function compilePipelineRubric(
     const response = await callStructuredJson({
       system: SYSTEM_PROMPT,
       user: `Query: ${cleanQuery}\n\nAvailable fields:\n${schema}`,
-      model: options.model,
+      model: options.model ?? DEFAULT_RUBRIC_PLANNER_MODEL,
       fetchFn: options.fetchFn,
       timeoutMs: options.timeoutMs,
       maxRetries: options.maxRetries,

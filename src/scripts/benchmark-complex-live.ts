@@ -14,13 +14,16 @@ import { checkEligibility, type ConstituentEligibilityRow } from "../givecampus/
 import { EVIDENCE_VERSION } from "../givecampus/criterion.js";
 import { evaluateLlmRubricCandidate, MapLlmRubricCache } from "../benchmark/llm-rubric-adapter.js";
 import { evaluateRubricForCandidate, TypesafeDynamicJevClient,
-  type CandidateRubricEvaluation, type DynamicRubric, type PipelineField } from "../pipeline/jev-evaluator.js";
+  type CandidateRubricEvaluation, type DynamicRubric } from "../pipeline/jev-evaluator.js";
+import { compilePipelineRubric, DEFAULT_RUBRIC_PLANNER_MODEL } from "../llm/pipeline-rubric.js";
 import { buildFinalDecisionQuestion, evaluateFinalTopTwentyActions, type FinalAction } from "../pipeline/final-decision.js";
+import { FIELD_NAMES } from "../pipeline/rubric.js";
+import { rankByRubric } from "../pipeline/rank.js";
 import { SqliteQuestionAnswerCache } from "../pipeline/question-cache.js";
-import { rankBm25 } from "../retrieval/bm25.js";
-import { EmbeddingCache, embeddingCacheKey } from "../retrieval/embedding-cache.js";
+import { EmbeddingCache } from "../retrieval/embedding-cache.js";
+import { OpenAIEmbeddingsClient } from "../retrieval/embeddings.js";
 import { buildConstituentCard, type ConstituentCard } from "../retrieval/item-card.js";
-import { reciprocalRankFusion } from "../retrieval/rrf.js";
+import { retrieveCandidates } from "../retrieval/retrieve.js";
 import { byId, asOfRows, label, metrics, loadBundleMaps, loadLocalVectors, cosine,
   type GoldContract, type GoldQuery, type GradedLabel, type RecordBundle, type Metrics } from "./benchmark-complex-offline.js";
 
@@ -44,24 +47,6 @@ const ACTION_QUESTIONS: Record<string, string> = {
   q3_reunion_reengagement: "Given this alumnus's class-year, affinity, and giving context, which one next action best supports reunion reengagement? Choose exactly one supplied action key; never abstain or invent another label.",
   q4_upgrade_ask_review: "Given the recorded giving, engagement, and career context, which one next action is appropriate? Treat title and employer as context only, not proof of capacity. Choose exactly one supplied action key; never abstain or invent another label.",
 };
-const RERANK_FIELDS: Record<string, PipelineField[]> = {
-  q1_lapsed_loyal_engaged: ["gift_recency_band", "gift_frequency_band", "engagement_events", "interaction_summary", "career_change_band", "solicitation_fatigue_band", "contactability"],
-  q2_stewardship_before_ask: ["gift_recency_band", "giving_amount_band", "interaction_summary", "contactability"],
-  q3_reunion_reengagement: ["affiliation_type", "class_year", "gift_recency_band", "engagement_events", "interaction_summary", "solicitation_fatigue_band"],
-  q4_upgrade_ask_review: ["gift_frequency_band", "gift_recency_band", "giving_amount_band", "engagement_events", "interaction_summary", "career_change_band", "solicitation_fatigue_band"],
-};
-const RERANK_QUESTIONS: Record<string, string> = {
-  q1_lapsed_loyal_engaged: "How strong is the constituent's priority for personal outreach, considering lapsed giving, prior loyalty, current engagement, career momentum, and solicitation fatigue?",
-  q2_stewardship_before_ask: "How urgent and well-supported is a stewardship thank-you, considering gift recency and amount bands plus recorded acknowledgement context?",
-  q3_reunion_reengagement: "How strong is the constituent's fit for reunion reengagement, considering alumni/class-year context, lapsed giving, affinity, and solicitation fatigue?",
-  q4_upgrade_ask_review: "How strong is the evidence for a personal upgrade conversation, considering giving consistency, increasing engagement, and career context; do not infer wealth or capacity from title or employer?",
-};
-const RERANK_LEVELS: [string, string, ...string[]] = [
-  "Very low priority: the listed fields provide little support for this query.",
-  "Low priority: there is limited or incomplete supporting evidence.",
-  "Moderate priority: several listed fields support a relevant next step.",
-  "High priority: multiple independent listed fields strongly support this query's next step.",
-];
 const ACTION_OPTIONS: Record<string, Record<FinalAction, string>> = {
   q1_lapsed_loyal_engaged: {
     thank_you: "Choose only when giving recency and interaction context indicate a recent gift still needing stewardship.",
@@ -107,17 +92,6 @@ function actionGold(queryId: string, gold: GradedLabel, canSolicit: boolean): Fi
   if (queryId === "q3_reunion_reengagement") return gold.action === "reunion_mailer" ? "reunion_mailer" : "event_invite";
   if (queryId === "q4_upgrade_ask_review") return gold.action === "ask" && canSolicit ? "ask" : "event_invite";
   return null;
-}
-
-function buildRerankRubric(queryId: string): DynamicRubric {
-  return {
-    id: `complex-rerank-${queryId}`,
-    version: "jev-rerank-v1",
-    gates: [],
-    scores: [{ id: "query_priority", question: RERANK_QUESTIONS[queryId]!,
-      levels: [...RERANK_LEVELS] as [string, string, ...string[]], fields: RERANK_FIELDS[queryId]!, weight: 1 }],
-    bonuses: [], tags: [],
-  };
 }
 
 function summarizeJevRerank(evaluations: CandidateRubricEvaluation[]) {
@@ -273,8 +247,22 @@ async function main(): Promise<void> {
     const vectors = loadLocalVectors(cards, frozen.queries);
     if (!vectors.status.available) throw new Error(`Exact full-corpus vectors unavailable: ${vectors.status.reason}`);
     const embeddingTelemetry = JSON.parse(fs.readFileSync(EMBEDDING_TELEMETRY_PATH, "utf8")) as Record<string, unknown>;
+    const embedder = new OpenAIEmbeddingsClient({ apiKey: process.env.OPENAI_API_KEY! });
+    const plannedRubrics = new Map(await Promise.all(frozen.queries.map(async (query) => {
+      const outcome = await compilePipelineRubric(query.query, FIELD_NAMES, {
+        model: DEFAULT_RUBRIC_PLANNER_MODEL,
+        timeoutMs: 60_000,
+        maxRetries: 2,
+      });
+      if (outcome.fallback) throw new Error(`Luna rubric compilation failed for ${query.id}: ${outcome.reason}`);
+      if (outcome.rubric.scores.length === 0 && outcome.rubric.bonuses.length === 0) {
+        throw new Error(`Luna rubric for ${query.id} has no scoring criteria`);
+      }
+      return [query.id, outcome] as const;
+    })));
     console.log(JSON.stringify({ phase: "live_decisions_started", eligibleN: cards.length,
-      candidateCap: CANDIDATE_CAP, queries: frozen.queries.length, embeddingCache: vectors.status.cachePath }));
+      candidateCap: CANDIDATE_CAP, queries: frozen.queries.length, embeddingCache: vectors.status.cachePath,
+      rubricPlannerModel: DEFAULT_RUBRIC_PLANNER_MODEL }));
 
     const results: Record<string, unknown>[] = [];
     const jevClient = new TypesafeDynamicJevClient();
@@ -301,24 +289,25 @@ async function main(): Promise<void> {
         score: cosine(queryVector, vectors.vectors.get(`card:${card.hash}`) ?? []),
       })).sort((a, b) => b.score - a.score || a.id - b.id).map((row) => row.id);
       const semanticMs = Date.now() - semanticStart;
-      const bm25Start = Date.now();
-      const bm25 = rankBm25(query.query, cards.map((card) => ({ id: card.constituentId, text: card.searchText })))
-        .map((row) => Number(row.id));
-      const bm25Seen = new Set(bm25);
-      const bm25Full = [...bm25, ...eligibleIds.filter((id) => !bm25Seen.has(id))];
-      const bm25Ms = Date.now() - bm25Start;
-      const fusionStart = Date.now();
-      const hybridRetrieved = reciprocalRankFusion([semanticRanked, bm25], 60).map((row) => Number(row.id));
+      const plan = plannedRubrics.get(query.id)!;
+      const retrievalStarted = Date.now();
+      const retrieval = await retrieveCandidates(cards, plan.rubric.phrasings, {
+        candidateCap: CANDIDATE_CAP,
+        filters: plan.rubric.filters,
+        embedder,
+        embeddingCache: vectorCache,
+        batchSize: 500,
+        datasetVersion: DATASET_VERSION,
+        evidenceVersion: EVIDENCE_VERSION,
+      });
+      const retrievalMs = Date.now() - retrievalStarted;
+      const hybridRetrieved = retrieval.candidates.map((card) => card.constituentId);
       const hybridSeen = new Set(hybridRetrieved);
       const hybridRanked = [...hybridRetrieved, ...eligibleIds.filter((id) => !hybridSeen.has(id))];
-      const hybridMs = Date.now() - fusionStart;
-      const hybridPool = hybridRanked.slice(0, CANDIDATE_CAP).flatMap((id) => {
-        const card = cardById.get(id);
-        return card ? [card] : [];
-      });
-      const rerankRubric = buildRerankRubric(query.id);
+      const hybridPool = retrieval.candidates;
+      const rerankRubric: DynamicRubric = { ...plan.rubric, tags: [] };
       const jevRerankStarted = Date.now();
-      const jevEvaluations = await parallelMap(hybridPool, 12, (card) => evaluateRubricForCandidate({
+      const jevEvaluations = await parallelMap(hybridPool, 24, (card) => evaluateRubricForCandidate({
         constituentId: card.constituentId,
         fields: { ...card.fields },
         evidenceRefs: card.evidenceRefs,
@@ -331,12 +320,7 @@ async function main(): Promise<void> {
       }), (completed) => console.log(JSON.stringify({ phase: "jev_rerank_progress", query: query.id,
         completed, total: hybridPool.length })));
       const jevRerankMs = Date.now() - jevRerankStarted;
-      const poolPosition = new Map(hybridPool.map((card, index) => [card.constituentId, index]));
-      const jevRerankedPool = [...jevEvaluations].sort((a, b) => {
-        const as = a.rubricScore ?? Number.NEGATIVE_INFINITY;
-        const bs = b.rubricScore ?? Number.NEGATIVE_INFINITY;
-        return bs - as || (poolPosition.get(a.constituentId) ?? 0) - (poolPosition.get(b.constituentId) ?? 0);
-      }).map((row) => row.constituentId);
+      const jevRerankedPool = rankByRubric(jevEvaluations).map((row) => row.constituentId);
       const jevPoolSet = new Set(jevRerankedPool);
       const jevRanked = [...jevRerankedPool, ...hybridRanked.filter((id) => !jevPoolSet.has(id))];
       const jevTop = jevRanked.slice(0, 20);
@@ -385,12 +369,19 @@ async function main(): Promise<void> {
 
       results.push({
         id: query.id,
+        rubricPlanner: {
+          requestedModel: DEFAULT_RUBRIC_PLANNER_MODEL,
+          telemetry: plan.telemetry,
+          rubric: plan.rubric,
+        },
         gradeCounts: [0, 1, 2, 3].map((grade) => [...grades.values()].filter((value) => value === grade).length),
         goldActionCounts: Object.fromEntries(Object.entries(gradeActions).sort()),
         rankings: {
           semanticOnly: { metrics: metrics(semanticRanked, grades), latencyMs: semanticMs },
-          semanticPlusBm25: { metrics: metrics(hybridRanked, grades), latencyMs: bm25Ms + hybridMs,
-            retrievedCandidateCount: Math.min(CANDIDATE_CAP, eligibleIds.length) },
+          semanticPlusBm25: { metrics: metrics(hybridRanked, grades), latencyMs: retrievalMs,
+            retrievedCandidateCount: retrieval.candidateCount, filteredCount: retrieval.filteredCount,
+            bm25RankLists: retrieval.bm25RankLists, embeddingRankLists: retrieval.embeddingRankLists,
+            embedding: retrieval.embedding },
           semanticPlusBm25Jev: { metrics: metrics(jevRanked, grades), latencyMs: jevRerankMs,
             rerankedCandidateCount: jevEvaluations.length, telemetry: jevRerankTelemetry },
         },

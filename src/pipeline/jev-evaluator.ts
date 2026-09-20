@@ -365,7 +365,7 @@ export async function evaluateRubricForCandidate(opts: EvaluateCandidateOptions)
   let disposition: CandidateRubricEvaluation["disposition"] = "eligible";
   let unknownDownrankCount = 0;
 
-  for (const criterion of opts.rubric.gates) {
+  const gateResults = await Promise.all(opts.rubric.gates.map(async (criterion) => {
     if (!Number.isFinite(criterion.threshold) || criterion.threshold < 0.5 || criterion.threshold > 1) {
       throw new Error(`Gate ${criterion.id} threshold must be between 0.5 and 1`);
     }
@@ -375,6 +375,10 @@ export async function evaluateRubricForCandidate(opts: EvaluateCandidateOptions)
       : probability >= criterion.threshold ? "pass"
         : probability <= 1 - criterion.threshold ? "fail" : "unknown";
     result.value = probability;
+    return { criterion, result };
+  }));
+
+  for (const { criterion, result } of gateResults) {
     gates[criterion.id] = result;
 
     if (result.status === "fail") {
@@ -396,9 +400,14 @@ export async function evaluateRubricForCandidate(opts: EvaluateCandidateOptions)
   const all = Object.values(gates);
   const knownGateCount = all.filter((g) => g.status !== "unknown").length;
   if (disposition !== "excluded" && disposition !== "review") {
-    for (const criterion of opts.rubric.scores) scores[criterion.id] = await evaluateOne(opts, "score", criterion);
-    for (const criterion of opts.rubric.bonuses) bonuses[criterion.id] = await evaluateOne(opts, "bonus", criterion);
-    for (const criterion of opts.rubric.tags) tags[criterion.id] = await evaluateOne(opts, "tag", criterion);
+    const [scoreResults, bonusResults, tagResults] = await Promise.all([
+      Promise.all(opts.rubric.scores.map(async (criterion) => [criterion.id, await evaluateOne(opts, "score", criterion)] as const)),
+      Promise.all(opts.rubric.bonuses.map(async (criterion) => [criterion.id, await evaluateOne(opts, "bonus", criterion)] as const)),
+      Promise.all(opts.rubric.tags.map(async (criterion) => [criterion.id, await evaluateOne(opts, "tag", criterion)] as const)),
+    ]);
+    for (const [id, result] of scoreResults) scores[id] = result;
+    for (const [id, result] of bonusResults) bonuses[id] = result;
+    for (const [id, result] of tagResults) tags[id] = result;
   }
   const answerCount = all.length + Object.keys(scores).length + Object.keys(bonuses).length + Object.keys(tags).length;
   const knownAnswerCount = [...all, ...Object.values(scores), ...Object.values(bonuses), ...Object.values(tags)]
@@ -419,7 +428,7 @@ export async function evaluateRubricForCandidates(
     concurrency?: number;
   },
 ): Promise<CandidateRubricEvaluation[]> {
-  const concurrency = Math.max(1, Math.min(8, Math.floor(shared.concurrency ?? 4)));
+  const concurrency = Math.max(1, Math.min(32, Math.floor(shared.concurrency ?? 8)));
   const results = new Array<CandidateRubricEvaluation>(candidates.length);
   let next = 0;
   async function worker(): Promise<void> {

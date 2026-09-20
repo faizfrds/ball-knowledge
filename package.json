@@ -15,7 +15,9 @@
     "start": "node dist/server.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "benchmark:complex:offline": "tsx src/scripts/benchmark-complex-offline.ts"
+    "benchmark:complex:offline": "tsx src/scripts/benchmark-complex-offline.ts",
+    "benchmark:complex:cache": "tsx src/scripts/cache-complex-benchmark-embeddings.ts",
+    "benchmark:complex:live": "tsx src/scripts/benchmark-complex-live.ts"
   },
   "dependencies": {
     "@typesafe-ai/sdk": "^0.6.0",

@@ -45,6 +45,34 @@ button#go:disabled{color:var(--faint);cursor:default}
   padding-bottom:1px}
 .hint i:hover{color:var(--accent);border-color:var(--accent)}
 
+/* ── corpus switch: two words, not a control panel ───────────────────── */
+.corpus{display:flex;gap:22px;margin-bottom:22px;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase}
+.corpus b{font-weight:400;color:var(--faint);cursor:pointer;padding-bottom:4px;
+  border-bottom:1.5px solid transparent;transition:.2s}
+.corpus b:hover{color:var(--mid)}
+.corpus b.on{color:var(--ink);border-bottom-color:var(--accent)}
+.corpus span{color:var(--faint);margin-left:auto;text-transform:none;letter-spacing:0}
+
+/* ── the dollars headline, for a corpus that has a value ─────────────── */
+.stake{margin:52px 0 0;padding:20px 22px;background:var(--accent-soft);
+  border-left:3px solid var(--accent)}
+.stake .n{font-family:var(--serif);font-size:38px;line-height:1;color:#8c2718}
+.stake .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#a2503f;margin-top:7px}
+
+/* ── a person, rather than a paper ───────────────────────────────────── */
+article .person{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;
+  margin-bottom:5px}
+article .person h2{margin:0}
+article .person .yr{font-family:var(--mono);font-size:12px;color:var(--faint)}
+article .person .val{margin-left:auto;font-family:var(--mono);font-size:12.5px;
+  color:var(--accent);font-weight:600}
+article .facts{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);
+  font-size:10.5px;color:var(--faint);margin-top:9px}
+article .facts b{color:var(--ink);font-weight:500}
+article .note{margin-top:12px;font-size:13.8px;color:var(--mid);font-style:italic}
+
 /* ── progress: a single hairline that fills ──────────────────────────── */
 .prog{height:1.5px;background:var(--rule);margin-top:-1.5px;position:relative;
   overflow:hidden;opacity:0;transition:opacity .25s}
@@ -157,8 +185,9 @@ footer i:hover{color:var(--accent)}
 <div class="wrap">
 
   <div class="stage" id="stage">
-    <div class="mark"><b>Ball Knowledge</b> &nbsp;/&nbsp; MIT research, 152,713 works</div>
-    <h1>Ask for the research you want, not the words it contains.</h1>
+    <div class="mark"><b>Ball Knowledge</b></div>
+    <div class="corpus" id="corpus"></div>
+    <h1 id="h1">Ask for what you want, not the words it contains.</h1>
     <form id="f">
       <textarea id="q" rows="1" autocomplete="off"
         placeholder="machine learning on neural recordings, from groups that also build hardware"></textarea>
@@ -175,7 +204,7 @@ footer i:hover{color:var(--accent)}
     <i data-x="trend">LLM adoption at MIT</i>
     <i data-x="groups">497 research groups</i>
     <i data-x="bench">Benchmarks</i>
-    <span style="margin-left:auto" id="stat"></span>
+    <span style="margin-left:auto"></span>
   </footer>
 </div>
 
@@ -192,13 +221,28 @@ q.addEventListener("input",grow);
 q.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("#f").requestSubmit()}});
 
-const EX=["protein structure prediction using deep learning",
-  "superconducting qubit experiments, not theory",
-  "soft robotics with compliant actuators",
-  "large language models applied to biology"];
-$("#hint").innerHTML="Try "+EX.map(e=>`<i>${esc(e)}</i>`).join(" · ")+
-  " &nbsp;— or paste a resume.";
+let DOMAIN="works", DOMAINS={};
+const COPY={
+  works:{h1:"Ask for the research you want, not the words it contains.",
+         ph:"machine learning on neural recordings, from groups that also build hardware",
+         hint:" — or paste a resume."},
+  constituents:{h1:"Ask who to call on Tuesday, and why them.",
+         ph:"loyal major donors nobody has asked in five years",
+         hint:" — a gift officer has forty hours a week."},
+};
+function setDomain(name){
+  DOMAIN=name;
+  const d=DOMAINS[name]||{}, c=COPY[name]||{};
+  document.querySelectorAll("#corpus b").forEach(b=>
+    b.classList.toggle("on", b.dataset.d===name));
+  $("#h1").textContent=c.h1||"";
+  q.placeholder=c.ph||"";
+  $("#hint").innerHTML="Try "+(d.examples||[]).slice(0,3)
+    .map(e=>`<i>${esc(e)}</i>`).join(" · ")+(c.hint||"");
+  out.innerHTML=""; steps.innerHTML=""; stage.classList.remove("lifted");
+}
 $("#hint").onclick=e=>{if(e.target.tagName==="I"){q.value=e.target.textContent;grow();$("#f").requestSubmit()}};
+$("#corpus").onclick=e=>{if(e.target.dataset&&e.target.dataset.d)setDomain(e.target.dataset.d)};
 
 /* ── progress ──────────────────────────────────────────────────────── */
 const STEPS=["compile","filter","retrieve","gate","score","rank","explain"];
@@ -276,6 +320,43 @@ function paper(r,i){
       </div></div></div>`:""}
   </article>`;
 }
+function person(r,i){
+  const g=Math.round((r.gate_p??0)*100), s=Math.round((r.score_s??0)*100);
+  const money=v=>"$"+Math.round(v||0).toLocaleString();
+  const roles=[...(r.volunteer_roles||[]),...(r.clubs||[]),r.athletics].filter(Boolean);
+  const last=r.last_gift_year?`last gift ${r.last_gift_year}`:"never given";
+  return `<article>
+    <div class="idx">${String(i+1).padStart(2,"0")}</div>
+    <div class="person">
+      <h2>${esc(r.full_name)}</h2>
+      <span class="yr">'${String(r.class_year??"").slice(2)} · ${esc(r.school||"")}</span>
+      ${r.value!=null?`<span class="val">${money(r.value)} at stake</span>`:""}
+    </div>
+    <div class="meta">${esc(r.job_title||"—")}${r.employer?" · "+esc(r.employer):""} · ${esc(r.city||"")}${r.state?", "+esc(r.state):""}</div>
+    ${r.why?`<div class="why-wrap"><span class="why">${esc(r.why)}</span></div>`:""}
+    <div class="facts">
+      <span>lifetime <b>${money(r.lifetime_giving)}</b></span>
+      <span>gifts <b>${r.gift_count??0}</b></span>
+      <span><b>${esc(last)}</b></span>
+      <span>silent <b>${r.years_since_contact??"?"}y</b></span>
+      ${r.is_recurring?`<span>recurring <b>${money(r.recurring_monthly)}/mo</b></span>`:""}
+      ${r.years_to_reunion===0?`<span><b>reunion year</b></span>`:""}
+      ${!r.assigned_officer?`<span><b>no officer</b></span>`:`<span>officer <b>${esc(r.assigned_officer)}</b></span>`}
+    </div>
+    <div class="sig">
+      <span>gate<span class="meter"><i data-w="${g}"></i></span>${g}%</span>
+      <span>score<span class="meter"><i data-w="${s}"></i></span>${s}%</span>
+      <span class="more">Read</span>
+    </div>
+    <div class="detail"><div class="inner">
+      ${r.notes?`<h4>Officer notes</h4><p>${esc(r.notes)}</p>`:""}
+      ${roles.length?`<h4>Involvement</h4><div class="tags">${roles.map(x=>`<span>${esc(x)}</span>`).join("")}</div>`:""}
+      <h4>Giving</h4><div class="auth">Largest gift ${money(r.largest_gift)} ·
+        last ${money(r.last_gift_amount)} · prefers ${esc(r.preferred_designation||"—")}</div>
+    </div></div>
+  </article>`;
+}
+
 function fillMeters(){
   requestAnimationFrame(()=>document.querySelectorAll(".meter i").forEach(
     e=>e.style.width=(e.dataset.w||0)+"%"));
@@ -301,7 +382,7 @@ $("#f").onsubmit=async e=>{
   out.innerHTML=`<div class="count"><span class="spin"></span>working</div>`;
   progStart();
   // A long paste is a person describing themselves, not a query.
-  const isProfile=text.length>400;
+  const isProfile=text.length>400 && DOMAIN==="works";
   try{
     if(isProfile){
       const r=await api("/api/fit",{text,top_k:5});
@@ -320,12 +401,17 @@ $("#f").onsubmit=async e=>{
         (r.papers_to_read||[]).map(paper).join("")+
         receiptBlock(r.receipt);
     }else{
-      const rb=await api("/api/rubric",{query:text});
-      const res=await api("/api/search",{query:text,rubric:rb.rubric,top_k:20});
+      const rb=await api("/api/rubric",{query:text,domain:DOMAIN});
+      const res=await api("/api/search",{query:text,rubric:rb.rubric,top_k:20,domain:DOMAIN});
       progEnd(res.receipt);
+      const render=DOMAIN==="constituents"?person:paper;
+      const stake=(res.total_value!=null)
+        ? `<div class="stake"><div class="n">$${Math.round(res.total_value).toLocaleString()}</div>
+             <div class="l">${esc(res.value_label||"at stake")} across these ${res.results.length}</div></div>`
+        : "";
       out.innerHTML=(res.results||[]).length
-        ? `<div class="count">${res.results.length} results</div>`+
-          res.results.map(paper).join("")+receiptBlock(res.receipt)
+        ? stake+`<div class="count">${res.results.length} results</div>`+
+          res.results.map(render).join("")+receiptBlock(res.receipt)
         : `<div class="err">Nothing cleared the gates for this query.</div>`+
           receiptBlock(res.receipt);
     }
@@ -411,8 +497,16 @@ function lineChart(pts){
   </svg>`;
 }
 
-fetch("/api/health").then(r=>r.json()).then(h=>{
-  $("#stat").textContent=`${fmt(h.works)} works · ${fmt(h.groups)} groups`;
+fetch("/api/domains").then(r=>r.json()).then(d=>{
+  const ready=d.domains.filter(x=>x.ready);
+  ready.forEach(x=>DOMAINS[x.name]=x);
+  const LABEL={works:"MIT Research",constituents:"Advancement"};
+  $("#corpus").innerHTML=ready.map(x=>
+    `<b data-d="${x.name}">${LABEL[x.name]||x.name}</b>`).join("")+
+    `<span id="stat"></span>`;
+  setDomain(ready.some(x=>x.name==="works")?"works":ready[0].name);
+  const tot=ready.map(x=>`${fmt(x.rows)} ${x.name==="works"?"works":"constituents"}`);
+  $("#corpus span").textContent=tot.join(" · ");
 }).catch(()=>{});
 grow();
 </script>

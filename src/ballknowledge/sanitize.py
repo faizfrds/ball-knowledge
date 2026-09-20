@@ -26,8 +26,10 @@ MAX_QUERY_CHARS = 2_000
 MAX_PROFILE_CHARS = 40_000
 MAX_FILTER_CHARS = 400
 
-# Every column a filter may name. Anything else is not in our schema and a filter
-# that references it is a compiler hallucination at best.
+# Fallback list, used only when no caller supplies a schema. Callers should pass the
+# real column set instead: a hand-maintained list silently rejected every legitimate
+# filter the first time a second corpus was added, which is a failure mode that hides
+# itself -- the query still returns results, just unfiltered ones.
 ALLOWED_COLUMNS = {
     "work_id", "doi", "title", "abstract", "publication_year", "publication_date",
     "type", "language", "cited_by_count", "fwci", "referenced_works_count",
@@ -96,7 +98,7 @@ def clean_profile(s: str) -> str:
     return clean_text(s, MAX_PROFILE_CHARS)
 
 
-def safe_filter(expr: str) -> bool:
+def safe_filter(expr: str, allowed_columns: set[str] | None = None) -> bool:
     """True if this SQL fragment is safe to drop into a WHERE clause.
 
     Allowlist, not blocklist: every bare identifier must be a known column, a known
@@ -104,6 +106,7 @@ def safe_filter(expr: str) -> bool:
     invented something, and an invented identifier is exactly what an injection looks
     like.
     """
+    cols = ALLOWED_COLUMNS if allowed_columns is None else allowed_columns
     if not expr or len(expr) > MAX_FILTER_CHARS:
         return False
     if FORBIDDEN.search(expr):
@@ -116,15 +119,16 @@ def safe_filter(expr: str) -> bool:
         return False                      # unbalanced quote
     for ident in _IDENT.findall(stripped):
         low = ident.lower()
-        if low in ALLOWED_COLUMNS or low in ALLOWED_FUNCTIONS or low in ALLOWED_KEYWORDS:
+        if low in cols or low in ALLOWED_FUNCTIONS or low in ALLOWED_KEYWORDS:
             continue
         return False
     return True
 
 
-def filter_filters(exprs: list[str]) -> tuple[list[str], list[str]]:
+def filter_filters(exprs: list[str],
+                   allowed_columns: set[str] | None = None) -> tuple[list[str], list[str]]:
     """Split compiler filters into the ones we will run and the ones we refused."""
     keep, drop = [], []
     for e in exprs or []:
-        (keep if safe_filter(str(e)) else drop).append(str(e))
+        (keep if safe_filter(str(e), allowed_columns) else drop).append(str(e))
     return keep, drop

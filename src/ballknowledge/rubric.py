@@ -53,7 +53,7 @@ PROMPT = """You turn a research-search question into a rubric that a search engi
 {rules}
 
 Return ONLY a JSON object with these keys:
-  "target": one of "works", "groups", "authors" - what the user is asking for
+  "target": the table named in the schema above
   "filters": array of SQL boolean expressions over the target table (may be empty)
   "phrasings": 2-5 short search strings capturing different wordings of the need
   "gates": array of {{"id","q","true","false","fields"}} - must-have yes/no checks
@@ -143,13 +143,14 @@ class LLMUsage:
 
 
 def compile_rubric(query: str, usage: LLMUsage | None = None,
-                   model: str = MODEL) -> Rubric:
+                   model: str = MODEL, schema: str | None = None) -> Rubric:
     from openai import OpenAI
     client = OpenAI()
     resp = client.chat.completions.create(
         model=model,
         messages=[{"role": "user",
-                   "content": PROMPT.format(schema=SCHEMA_DESC, rules=RULES, query=query)}],
+                   "content": PROMPT.format(schema=schema or SCHEMA_DESC,
+                                            rules=RULES, query=query)}],
         response_format={"type": "json_object"},
         temperature=0,
     )
@@ -168,14 +169,19 @@ def explain(query: str, items: list[dict], usage: LLMUsage | None = None,
     from openai import OpenAI
     client = OpenAI()
     listing = "\n".join(
-        f"{i+1}. {it.get('title') or it.get('name')} — {(it.get('why_context') or '')[:300]}"
+        f"{i+1}. {it.get('title') or it.get('full_name') or it.get('name')} "
+        f"— {(it.get('why_context') or '')[:300]}"
         for i, it in enumerate(items))
     resp = client.chat.completions.create(
         model=model,
         messages=[{"role": "user", "content":
                    f'Question: "{query}"\n\nResults:\n{listing}\n\n'
-                   f"For each numbered result write ONE short sentence saying why it "
-                   f"answers the question. Return JSON: "
+                   f"For each numbered result write ONE short sentence giving the "
+                   f"SPECIFIC reason it belongs in this answer -- name the fact that "
+                   f"makes it qualify. Never restate the question, never say the item "
+                   f"'matches' or 'was chosen'; if the only thing you can say is that "
+                   f"it appeared in the results, say what is actually known about it "
+                   f"instead. Return JSON: "
                    f'{{"reasons": ["...", "..."]}} in the same order.'}],
         response_format={"type": "json_object"},
         temperature=0,

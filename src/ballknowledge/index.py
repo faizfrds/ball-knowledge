@@ -103,7 +103,9 @@ class HybridIndex:
         return ids[:top_k]
 
 
-def build_bm25(processed: str = "data/processed", db: str | None = None) -> None:
+def build_bm25(processed: str = "data/processed", db: str | None = None,
+               table: str = "works", id_col: str = "work_id",
+               index_sql: str | None = None) -> None:
     """Build the BM25 index over the same rows, in the same order, as the embeddings.
 
     row_id is the position in embed_ids.json, so sparse and dense rankings refer to
@@ -112,10 +114,10 @@ def build_bm25(processed: str = "data/processed", db: str | None = None) -> None
 
     p = Path(processed)
     ids = json.loads((p / "embed_ids.json").read_text())
+    text = index_sql or "coalesce(title,'') || ' ' || coalesce(abstract,'')"
     src = duckdb.connect(db or str(p / "ball.duckdb"), read_only=True)
     rows = dict(src.execute(
-        "SELECT work_id, coalesce(title,'') || ' ' || coalesce(abstract,'') "
-        "FROM works WHERE abstract IS NOT NULL").fetchall())
+        f"SELECT {id_col}, {text} FROM {table}").fetchall())
     src.close()
 
     out = p / "fts.duckdb"

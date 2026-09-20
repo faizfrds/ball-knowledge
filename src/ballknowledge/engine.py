@@ -16,6 +16,7 @@ from typing import Any, Callable
 
 import duckdb
 
+from .domain import Domain, get as get_domain
 from .jev import JevClient, p_true
 from .rubric import LLMUsage, Rubric, compile_rubric, explain
 from .sanitize import clean_query, filter_filters
@@ -70,26 +71,14 @@ class Receipt:
                 "total_cost_usd": round(self.total_cost, 6)}
 
 
-def format_item(row: dict, fields: list[str] | None) -> str:
-    """Jev reads text, and only the fields a question needs -- extra detail costs
-    both tokens and accuracy."""
-    keep = fields or ["title", "abstract"]
-    parts = []
-    for f in keep:
-        v = row.get(f)
-        if v in (None, "", []):
-            continue
-        parts.append(f"{f.replace('_', ' ').title()}: "
-                     f"{', '.join(map(str, v)) if isinstance(v, list) else v}")
-    return "\n".join(parts)
-
-
 class Engine:
-    def __init__(self, db: str = "data/processed/ball.duckdb",
-                 processed: str = "data/processed"):
-        self.db = db
-        self.processed = processed
+    def __init__(self, db: str | None = None, processed: str | None = None,
+                 domain: Domain | str = "works"):
+        self.domain = get_domain(domain) if isinstance(domain, str) else domain
+        self.db = db or self.domain.db
+        self.processed = processed or self.domain.processed
         self._index = None
+        self._columns: set[str] | None = None
 
     @property
     def index(self):
@@ -101,6 +90,16 @@ class Engine:
     def con(self):
         return duckdb.connect(self.db, read_only=True)
 
+    @property
+    def columns(self) -> set[str]:
+        """The real column names, read from the database rather than kept by hand."""
+        if self._columns is None:
+            c = self.con()
+            self._columns = {r[1].lower() for r in
+                             c.execute(f"PRAGMA table_info('{self.domain.table}')").fetchall()}
+            c.close()
+        return self._columns
+
     def search(self, query: str, top_k: int = 20, pool: int = 20_000,
                rubric: Rubric | None = None, retrieval_weight: float | None = None,
                on_progress: Callable[[str, dict], None] | None = None) -> dict:
@@ -111,7 +110,8 @@ class Engine:
         t = time.time()
 
         if rubric is None:
-            rubric = compile_rubric(query, llm_usage)
+            rubric = compile_rubric(query, llm_usage,
+                                    schema=self.domain.schema_desc)
         r.stages["compile"] = round(time.time() - t, 2)
         if on_progress:
             on_progress("rubric", rubric.as_dict())
@@ -120,7 +120,7 @@ class Engine:
         # The compiler is an LLM and its output lands in a WHERE clause, so every
         # fragment is checked against a column/function allowlist before it runs.
         t = time.time()
-        safe, refused = filter_filters(rubric.filters)
+        safe, refused = filter_filters(rubric.filters, self.columns)
         if refused:
             r.filters_rejected = refused
             rubric.filters = safe
@@ -128,7 +128,7 @@ class Engine:
         where = " AND ".join(f"({f})" for f in rubric.filters) or "TRUE"
         try:
             allow = {w for (w,) in con.execute(
-                f"SELECT work_id FROM works WHERE abstract IS NOT NULL AND {where}"
+                f"SELECT {self.domain.id_col} FROM {self.domain.table} WHERE {where}"
             ).fetchall()}
         except Exception:
             # A filter the compiler invented against a column that does not exist
@@ -142,7 +142,7 @@ class Engine:
             r.filters_dropped = rubric.filters
             rubric.filters = []
             allow = {w for (w,) in con.execute(
-                "SELECT work_id FROM works WHERE abstract IS NOT NULL").fetchall()}
+                f"SELECT {self.domain.id_col} FROM {self.domain.table}").fetchall()}
         r.stages["filter"] = round(time.time() - t, 2)
 
         # 2. Retrieval, fused across every phrasing.
@@ -159,17 +159,17 @@ class Engine:
 
         rows = {w: dict(zip([d[0] for d in con.description], vals)) for w, vals in
                 ((v[0], v) for v in con.execute(
-                    "SELECT work_id, title, abstract, publication_year, venue, topic, "
-                    "field, subfield, cited_by_count, n_authors, is_oa, doi, oa_url, "
-                    "topic_names, keywords "
-                    "FROM works WHERE work_id IN ?", [cand_ids]).fetchall())}
+                    f"SELECT {', '.join(self.domain.select_cols)} "
+                    f"FROM {self.domain.table} "
+                    f"WHERE {self.domain.id_col} IN ?", [cand_ids]).fetchall())}
         con.close()
         cand_ids = [w for w in cand_ids if w in rows]
         # Position in the fused retrieval ranking, kept for the final blend.
         ret_rank = {w: i for i, w in enumerate(cand_ids)}
 
         jev = JevClient(workers=GATE_WORKERS)
-        gate_fields = sorted({f for g in rubric.gates for f in g.get("fields", [])}) or None
+        gate_fields = (sorted({f for g in rubric.gates for f in g.get("fields", [])})
+                       or self.domain.default_fields)
 
         # 3. Gate: the must-haves, over every candidate.
         t = time.time()
@@ -179,7 +179,7 @@ class Engine:
             judged: list[str] = []
             for start in range(0, len(cand_ids), WAVE):
                 wave = cand_ids[start:start + WAVE]
-                texts = [format_item(rows[w], gate_fields) for w in wave]
+                texts = [self.domain.format_item(rows[w], gate_fields) for w in wave]
                 answers = jev.judge_packed(texts, gate_qs, per_request=PACK)
                 judged.extend(wave)
                 for w, ans in zip(wave, answers):
@@ -219,9 +219,10 @@ class Engine:
                    if not k.startswith("gate__")}
         detail: dict[str, dict] = {w: {} for w in survivors}
         if full_qs and survivors:
-            fields = sorted({f for s in rubric.scores + rubric.bonuses
-                             for f in s.get("fields", [])}) or None
-            texts = [format_item(rows[w], fields) for w in survivors]
+            fields = (sorted({f for s in rubric.scores + rubric.bonuses
+                              for f in s.get("fields", [])})
+                      or self.domain.default_fields)
+            texts = [self.domain.format_item(rows[w], fields) for w in survivors]
             for w, ans in zip(survivors, jev.judge_packed(texts, full_qs, per_request=8)):
                 detail[w] = ans
         r.scored = len(survivors)
@@ -244,6 +245,7 @@ class Engine:
                     default=0.0) if rubric.bonuses else 0.0
             G = gate_p[w]
             row = dict(rows[w])
+            row["item_id"] = w
             rubric_score = G * (0.4 + 0.6 * S) + 0.1 * B
             # Reciprocal rank, normalised so the top retrieved document scores 1.0.
             rr = (60.0 + 1.0) / (60.0 + ret_rank.get(w, len(cand_ids)) + 1.0)
@@ -253,11 +255,26 @@ class Engine:
             row["tags"] = {t["id"]: getattr(ans.get(f"tag__{t['id']}"), "choice", None)
                            for t in rubric.tags}
             scored.append(row)
+        # When a domain values its rows, ranking becomes expected value: how well
+        # the item fits, multiplied by what acting on it is worth. Value is taken in
+        # log space so a single enormous gift cannot outrank genuine fit, and is
+        # normalised across the survivors so the scale is relative to this result set.
+        if self.domain.value_of and scored:
+            import math as _m
+            vals = [max(self.domain.value_of(r), 1.0) for r in scored]
+            lo, hi = _m.log(min(vals)), _m.log(max(vals))
+            span = (hi - lo) or 1.0
+            for row, v in zip(scored, vals):
+                norm = (_m.log(v) - lo) / span
+                row["value"] = round(v, 2)
+                row["value_norm"] = round(norm, 4)
+                row["fit_score"] = row["score"]
+                row["score"] = row["score"] * (0.35 + 0.65 * norm)
         scored.sort(key=lambda x: -x["score"])
         top = scored[:top_k]
 
         # Authors live in another table; fetch them only for the results we return.
-        if top:
+        if top and self.domain.name == "works":
             con2 = self.con()
             rows_a = con2.execute("""
                 SELECT work_id, author_name, is_mit FROM authorships
@@ -276,7 +293,18 @@ class Engine:
         t = time.time()
         if top:
             for row in top:
-                row["why_context"] = (row.get("abstract") or "")[:300]
+                if self.domain.name == "constituents":
+                    # Without the giving figures the explainer can only paraphrase
+                    # the note, which reads as circular.
+                    row["why_context"] = (
+                        f"class of {row.get('class_year')}, {row.get('job_title')} at "
+                        f"{row.get('employer')}, ${row.get('lifetime_giving',0):,.0f} "
+                        f"lifetime over {row.get('gift_count')} gifts, last gift "
+                        f"{row.get('last_gift_year')}, {row.get('years_since_contact')}"
+                        f"y since contact. {str(row.get('notes') or '')[:260]}")
+                else:
+                    ctx = row.get("abstract") or row.get("notes") or ""
+                    row["why_context"] = str(ctx)[:300]
             try:
                 for row, why in zip(top, explain(query, top, llm_usage)):
                     row["why"] = why

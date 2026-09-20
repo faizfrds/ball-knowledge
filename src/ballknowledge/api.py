@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from .domain import DOMAINS, get as get_domain
 from .engine import Engine
 from .rubric import LLMUsage, Rubric, compile_rubric
 from .sanitize import MAX_PROFILE_CHARS, MAX_QUERY_CHARS, clean_profile, clean_query
@@ -29,7 +30,21 @@ RESULTS = Path("results")
 app = FastAPI(title="Ball Knowledge")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"],
                    allow_headers=["*"])
-engine = Engine(db=DB)
+
+# One engine per corpus; they share every line of pipeline code and differ only in
+# the three things domain.py defines.
+_engines: dict[str, Engine] = {}
+
+
+def engine_for(name: str) -> Engine:
+    if name not in DOMAINS:
+        raise HTTPException(400, f"unknown domain {name!r}")
+    if name not in _engines:
+        _engines[name] = Engine(domain=name)
+    return _engines[name]
+
+
+engine = engine_for("works")
 
 
 def con():
@@ -38,6 +53,7 @@ def con():
 
 class SearchReq(BaseModel):
     query: str = Field(min_length=1, max_length=MAX_QUERY_CHARS * 4)
+    domain: str = "works"
     top_k: int = Field(default=20, ge=1, le=100)
     pool: int = Field(default=20_000, ge=50, le=40_000)
     rubric: dict | None = None      # an edited rubric re-ranks without recompiling
@@ -46,6 +62,26 @@ class SearchReq(BaseModel):
 class ProfileReq(BaseModel):
     text: str = Field(min_length=1, max_length=MAX_PROFILE_CHARS * 4)
     top_k: int = Field(default=5, ge=1, le=50)
+
+
+@app.get("/api/domains")
+def domains() -> dict:
+    """What corpora this deployment can search, and an example query for each."""
+    out = []
+    for name, d in DOMAINS.items():
+        ready = (Path(d.processed) / "embeddings.npy").exists()
+        n = 0
+        if ready:
+            try:
+                c = duckdb.connect(d.db, read_only=True)
+                n = c.execute(f"SELECT count(*) FROM {d.table}").fetchone()[0]
+                c.close()
+            except Exception:
+                ready = False
+        out.append({"name": name, "label": d.label_col, "ready": ready, "rows": n,
+                    "examples": d.examples,
+                    "has_value": bool(d.value_of), "value_label": d.value_label})
+    return {"domains": out}
 
 
 @app.get("/api/health")
@@ -67,7 +103,7 @@ def make_rubric(req: SearchReq) -> dict:
     if not q:
         raise HTTPException(400, "query is empty after cleaning")
     u = LLMUsage()
-    r = compile_rubric(q, u)
+    r = compile_rubric(q, u, schema=get_domain(req.domain).schema_desc)
     return {"rubric": r.as_dict(), "llm": u.as_dict(), "query": q}
 
 
@@ -77,8 +113,14 @@ def search(req: SearchReq) -> dict:
     if not q:
         raise HTTPException(400, "query is empty after cleaning")
     rubric = Rubric.from_dict(req.rubric, q) if req.rubric else None
+    eng = engine_for(req.domain)
     try:
-        return engine.search(q, top_k=req.top_k, pool=req.pool, rubric=rubric)
+        out = eng.search(q, top_k=req.top_k, pool=req.pool, rubric=rubric)
+        out["domain"] = req.domain
+        if eng.domain.value_of:
+            out["total_value"] = round(sum(r.get("value", 0) for r in out["results"]), 2)
+            out["value_label"] = eng.domain.value_label
+        return out
     except Exception as e:
         raise HTTPException(500, f"{type(e).__name__}: {e}")
 

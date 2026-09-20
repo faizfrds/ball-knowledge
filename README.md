@@ -103,6 +103,14 @@ query
 | `scripts/enrich.py` | corpus-scale enrichment pass |
 | `scripts/token_ledger.py` | every token and dollar across every run |
 
+## Second corpus: GiveCampus
+
+The same engine runs over a school's advancement database — see
+[GIVECAMPUS.md](GIVECAMPUS.md). Porting took only the three things below, and on the
+question *"loyal major donors nobody has asked in five years"* it surfaces **$7.9M of
+dollars at stake** in the top five, including a $1.04M lifetime donor with no
+assigned officer for three cycles.
+
 ## Porting to another corpus
 
 Three things are task-specific; the rest is unchanged.

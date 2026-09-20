@@ -1,0 +1,157 @@
+{
+  "n_sampled": 300,
+  "gold_size": 296,
+  "ambiguous": 4,
+  "judges": [
+    "gpt-6-astra",
+    "gpt-5.5"
+  ],
+  "cohens_kappa": 0.9641,
+  "raw_judge_agreement": 0.9867,
+  "corpus_n": 118354,
+  "bootstrap_rounds": 1000,
+  "prices_used": {
+    "jev_packed25": {
+      "in": 0.042,
+      "out": 0.0
+    },
+    "jev_per_item": {
+      "in": 0.042,
+      "out": 0.0
+    },
+    "gpt-5.2": {
+      "in": 1.75,
+      "out": 14.0
+    },
+    "gpt-5.6-sol": {
+      "in": 4.0,
+      "out": 20.0
+    }
+  },
+  "arms": {
+    "jev_packed25": {
+      "model": "jev-1.13.0",
+      "seconds": 1.0,
+      "items_per_sec": 309.0,
+      "requests": 12,
+      "input_tokens": 132698,
+      "output_tokens": 6348,
+      "latency_p50": 0.708,
+      "latency_p95": 0.774,
+      "cost_usd": 0.005573,
+      "priced": true,
+      "cost_per_1k": 0.01858,
+      "projected_corpus_usd": 2.2,
+      "projected_1m_usd": 18.58,
+      "precision": 0.7391,
+      "recall": 0.7083,
+      "f1": 0.7234,
+      "precision_ci95": [
+        0.64,
+        0.8382
+      ],
+      "recall_ci95": [
+        0.6032,
+        0.8169
+      ],
+      "f1_ci95": [
+        0.637,
+        0.8052
+      ],
+      "win_rate_f1": 0.0
+    },
+    "jev_per_item": {
+      "model": "jev-1.13.0",
+      "seconds": 6.2,
+      "items_per_sec": 48.4,
+      "requests": 300,
+      "input_tokens": 198122,
+      "output_tokens": 6000,
+      "latency_p50": 0.188,
+      "latency_p95": 0.315,
+      "cost_usd": 0.008321,
+      "priced": true,
+      "cost_per_1k": 0.02774,
+      "projected_corpus_usd": 3.28,
+      "projected_1m_usd": 27.74,
+      "precision": 0.9589,
+      "recall": 0.9722,
+      "f1": 0.9655,
+      "precision_ci95": [
+        0.9067,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9275,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9315,
+        0.993
+      ],
+      "win_rate_f1": 0.02
+    },
+    "gpt-5.2": {
+      "model": "gpt-5.2",
+      "seconds": 22.9,
+      "items_per_sec": 13.1,
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 3300,
+      "latency_p50": 0.716,
+      "latency_p95": 0.903,
+      "cost_usd": 0.206764,
+      "priced": true,
+      "cost_per_1k": 0.68921,
+      "projected_corpus_usd": 81.57,
+      "projected_1m_usd": 689.21,
+      "precision": 0.9859,
+      "recall": 0.9722,
+      "f1": 0.979,
+      "precision_ci95": [
+        0.9516,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9268,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9489,
+        1.0
+      ],
+      "win_rate_f1": 0.135
+    },
+    "gpt-5.6-sol": {
+      "model": "gpt-5.6-sol",
+      "seconds": 34.8,
+      "items_per_sec": 8.6,
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 5931,
+      "latency_p50": 0.964,
+      "latency_p95": 1.85,
+      "cost_usd": 0.485624,
+      "priced": true,
+      "cost_per_1k": 1.61875,
+      "projected_corpus_usd": 191.59,
+      "projected_1m_usd": 1618.75,
+      "precision": 0.9863,
+      "recall": 1.0,
+      "f1": 0.9931,
+      "precision_ci95": [
+        0.9535,
+        1.0
+      ],
+      "recall_ci95": [
+        1.0,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9762,
+        1.0
+      ],
+      "win_rate_f1": 0.845
+    }
+  }
+}

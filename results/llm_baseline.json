@@ -1,0 +1,50 @@
+{
+  "judge": "gpt-5.2",
+  "llm": "gpt-5.2",
+  "n": 300,
+  "corpus_n": 118354,
+  "labels": 300,
+  "arms": {
+    "jev_packed": {
+      "precision": 0.7391,
+      "recall": 0.7183,
+      "f1": 0.7286,
+      "seconds": 1.0,
+      "items_per_sec": 305.2,
+      "requests": 12,
+      "input_tokens": 132698,
+      "cost_usd": 0.00557,
+      "cost_per_1k_items": 0.0186,
+      "projected_corpus_usd": 2.2,
+      "projected_1m_usd": 18.58
+    },
+    "jev_per_item": {
+      "precision": 0.9589,
+      "recall": 0.9859,
+      "f1": 0.9722,
+      "seconds": 5.8,
+      "items_per_sec": 51.6,
+      "requests": 300,
+      "input_tokens": 198122,
+      "cost_usd": 0.00832,
+      "cost_per_1k_items": 0.0277,
+      "projected_corpus_usd": 3.28,
+      "projected_1m_usd": 27.74
+    },
+    "llm": {
+      "precision": 0.9859,
+      "recall": 0.9859,
+      "f1": 0.9859,
+      "seconds": 19.5,
+      "items_per_sec": 15.4,
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 3300,
+      "cost_usd": 0.0,
+      "cost_per_1k_items": 0.0,
+      "projected_corpus_usd": 0.0,
+      "projected_1m_usd": 0.0,
+      "model": "gpt-5.2"
+    }
+  }
+}

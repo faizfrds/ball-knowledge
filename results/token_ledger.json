@@ -1,0 +1,185 @@
+{
+  "rows": [
+    {
+      "activity": "enrichment (packed@25)",
+      "provider": "typesafe",
+      "model": "jev-1.13.0",
+      "requests": 4512,
+      "input_tokens": 48448318,
+      "output_tokens": 0,
+      "cost_usd": 2.0348293560000004,
+      "note": ""
+    },
+    {
+      "activity": "enrichment (per-item)",
+      "provider": "typesafe",
+      "model": "jev-1.13.0",
+      "requests": 80000,
+      "input_tokens": 51904761,
+      "output_tokens": 0,
+      "cost_usd": 2.179999962,
+      "note": "incomplete: 80,000 items before credits ran out"
+    },
+    {
+      "activity": "embeddings",
+      "provider": "openai",
+      "model": "text-embedding-3-small",
+      "requests": 0,
+      "input_tokens": 30000000,
+      "output_tokens": 0,
+      "cost_usd": 0.6,
+      "note": "114,322 documents"
+    },
+    {
+      "activity": "benchmark arm (benchmark)",
+      "provider": "typesafe",
+      "model": "jev-1.13.0",
+      "requests": 12,
+      "input_tokens": 132698,
+      "output_tokens": 6348,
+      "cost_usd": 0.005573316000000001,
+      "note": "F1=0.7234"
+    },
+    {
+      "activity": "benchmark arm (benchmark)",
+      "provider": "typesafe",
+      "model": "jev-1.13.0",
+      "requests": 300,
+      "input_tokens": 198122,
+      "output_tokens": 6000,
+      "cost_usd": 0.008321124000000001,
+      "note": "F1=0.9655"
+    },
+    {
+      "activity": "benchmark arm (benchmark)",
+      "provider": "openai",
+      "model": "gpt-5.2",
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 3300,
+      "cost_usd": 0.20676424999999998,
+      "note": "F1=0.979"
+    },
+    {
+      "activity": "benchmark arm (benchmark)",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 5931,
+      "cost_usd": 0.485624,
+      "note": "F1=0.9931"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "openai",
+      "model": "gpt-5.2",
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 3300,
+      "cost_usd": 0.20676424999999998,
+      "note": "F1=0.9793"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "openai",
+      "model": "gpt-5.6-sol",
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 6992,
+      "cost_usd": 0.506844,
+      "note": "F1=0.9932"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "opencode",
+      "model": "muse-spark-1.3-contributor",
+      "requests": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0.0,
+      "note": "F1=0.0"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "opencode",
+      "model": "glm-5.3-flash",
+      "requests": 300,
+      "input_tokens": 95044,
+      "output_tokens": 6436,
+      "cost_usd": 0.0174746,
+      "note": "F1=0.9517"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "opencode",
+      "model": "deepseek-v4-flash",
+      "requests": 300,
+      "input_tokens": 113459,
+      "output_tokens": 28335,
+      "cost_usd": 0.03401985,
+      "note": "F1=0.9865"
+    },
+    {
+      "activity": "benchmark arm (benchmark_llms)",
+      "provider": "opencode",
+      "model": "mimo-v2.5",
+      "requests": 300,
+      "input_tokens": 166434,
+      "output_tokens": 2526,
+      "cost_usd": null,
+      "note": "F1=0.6708"
+    },
+    {
+      "activity": "retrieval comparison",
+      "provider": "mixed",
+      "model": "ball",
+      "requests": 20,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 1.8246,
+      "note": "P@10=0.625"
+    }
+  ],
+  "by_provider": {
+    "typesafe": {
+      "requests": 84824,
+      "in": 100683899,
+      "out": 12348,
+      "cost": 4.228723758000001,
+      "unpriced": 0
+    },
+    "openai": {
+      "requests": 1200,
+      "in": 30367004,
+      "out": 19523,
+      "cost": 2.0059964999999997,
+      "unpriced": 0
+    },
+    "opencode": {
+      "requests": 900,
+      "in": 374937,
+      "out": 37297,
+      "cost": 0.05149445,
+      "unpriced": 1
+    },
+    "mixed": {
+      "requests": 20,
+      "in": 0,
+      "out": 0,
+      "cost": 1.8246,
+      "unpriced": 0
+    }
+  },
+  "total_input_tokens": 131425840,
+  "total_output_tokens": 69168,
+  "total_cost_usd": 8.1108,
+  "counterfactual_input_only_usd": {
+    "jev-1.13.0": 4.23,
+    "gpt-5.2": 176.2,
+    "gpt-5.6-sol": 402.74,
+    "muse-spark-1.3-contributor": 125.85,
+    "glm-5.3-flash": 15.1,
+    "deepseek-v4-flash": 15.1
+  }
+}

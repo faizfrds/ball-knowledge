@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ball Knowledge</title>
+<style>
+/* One box. Type anything. Everything else is a consequence of what you typed. */
+:root{
+  --paper:#faf9f7; --ink:#111110; --mid:#6b6862; --faint:#a8a49c;
+  --rule:#e4e1db; --accent:#d4442f; --accent-soft:#fbeeeb;
+  --serif:'Times New Roman',Times,'Iowan Old Style',Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink)}
+body{font-family:var(--sans);font-size:15px;line-height:1.6;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:720px;margin:0 auto;padding:0 28px 120px}
+
+/* ── the box ─────────────────────────────────────────────────────────── */
+.stage{min-height:62vh;display:flex;flex-direction:column;justify-content:center;
+  transition:min-height .6s cubic-bezier(.22,1,.36,1)}
+.stage.lifted{min-height:0;padding-top:52px}
+.mark{font-family:var(--serif);font-size:13px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:26px}
+.mark b{color:var(--ink);font-weight:400}
+h1{font-family:var(--serif);font-weight:400;font-size:clamp(34px,5.5vw,52px);
+  line-height:1.1;letter-spacing:-.015em;margin:0 0 30px;max-width:15ch}
+.stage.lifted h1{font-size:0;margin:0;height:0;overflow:hidden;transition:.4s}
+form{position:relative;border-bottom:1.5px solid var(--ink);display:flex;
+  align-items:flex-end;gap:14px}
+textarea#q{flex:1;border:0;outline:0;background:transparent;resize:none;
+  font-family:var(--serif);font-size:25px;line-height:1.35;color:var(--ink);
+  padding:0 0 13px;overflow:hidden;min-height:38px}
+textarea#q::placeholder{color:var(--faint)}
+button#go{border:0;background:transparent;cursor:pointer;padding:0 0 15px;
+  font-family:var(--sans);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--accent)}
+button#go:disabled{color:var(--faint);cursor:default}
+.hint{margin-top:13px;font-size:12.5px;color:var(--faint);display:flex;gap:7px;
+  flex-wrap:wrap;align-items:baseline}
+.hint i{font-style:normal;cursor:pointer;border-bottom:1px solid var(--rule);
+  padding-bottom:1px}
+.hint i:hover{color:var(--accent);border-color:var(--accent)}
+
+/* ── progress: a single hairline that fills ──────────────────────────── */
+.prog{height:1.5px;background:var(--rule);margin-top:-1.5px;position:relative;
+  overflow:hidden;opacity:0;transition:opacity .25s}
+.prog.on{opacity:1}
+.prog i{position:absolute;inset:0 auto 0 0;background:var(--accent);width:0;
+  transition:width .5s cubic-bezier(.22,1,.36,1)}
+.steps{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-family:var(--mono);
+  font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.steps span{transition:color .3s}
+.steps span.live{color:var(--accent)}
+.steps span.done{color:var(--mid)}
+.steps span em{font-style:normal;color:var(--faint)}
+
+/* ── results ─────────────────────────────────────────────────────────── */
+.count{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);margin:52px 0 6px;
+  padding-bottom:9px;border-bottom:1px solid var(--rule)}
+article{padding:24px 0;border-bottom:1px solid var(--rule);position:relative}
+article .idx{position:absolute;left:-46px;top:27px;font-family:var(--mono);
+  font-size:10.5px;color:var(--faint)}
+@media(max-width:860px){article .idx{display:none}}
+article h2{font-family:var(--serif);font-weight:400;font-size:21px;line-height:1.3;
+  margin:0 0 7px;letter-spacing:-.005em}
+article h2 a{color:var(--ink);text-decoration:none;
+  background-image:linear-gradient(var(--accent),var(--accent));
+  background-size:0 1px;background-repeat:no-repeat;background-position:0 100%;
+  transition:background-size .3s}
+article:hover h2 a{background-size:100% 1px}
+article .meta{font-family:var(--mono);font-size:11px;color:var(--faint);
+  letter-spacing:.02em}
+/* The reason line gets a highlighter stroke that wipes in from the left --
+   a wash of the accent behind the text, not a border, so it reads as ink. */
+article .why{margin-top:12px;font-size:14.6px;color:var(--ink);position:relative;
+  display:inline;line-height:1.85;
+  background-image:linear-gradient(var(--accent-soft),var(--accent-soft));
+  background-repeat:no-repeat;background-position:0 .08em;background-size:0 88%;
+  box-decoration-break:clone;-webkit-box-decoration-break:clone;
+  padding:1px 5px 2px 0;
+  transition:background-size 1.05s cubic-bezier(.19,1,.22,1)}
+article.lit .why{background-size:100% 88%}
+article .why-wrap{margin-top:2px}
+article .why::before{content:"";display:inline-block;width:14px;height:1px;
+  background:var(--accent);vertical-align:middle;margin:0 9px 3px 0}
+article .sig{margin-top:13px;display:flex;gap:20px;font-family:var(--mono);
+  font-size:10px;color:var(--faint);align-items:center;flex-wrap:wrap}
+article .sig .more{margin-left:auto;cursor:pointer;color:var(--mid);
+  letter-spacing:.12em;text-transform:uppercase;user-select:none;
+  border-bottom:1px solid var(--rule);padding-bottom:1px;transition:.2s}
+article .sig .more:hover{color:var(--accent);border-color:var(--accent)}
+article .detail{max-height:0;overflow:hidden;
+  transition:max-height .55s cubic-bezier(.22,1,.36,1),opacity .4s;opacity:0}
+article.open .detail{max-height:760px;opacity:1}
+article .detail .inner{padding:18px 0 4px;border-top:1px solid var(--rule);
+  margin-top:16px}
+article .detail h4{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--faint);margin:0 0 7px;font-weight:400}
+article .detail p{margin:0 0 16px;font-size:14.2px;line-height:1.66;color:var(--mid)}
+article .detail .auth{font-size:13.5px;color:var(--mid);margin-bottom:16px}
+article .detail .auth b{color:var(--ink);font-weight:500}
+article .detail .auth b::after{content:" · MIT";font-family:var(--mono);font-size:9px;
+  color:var(--accent);letter-spacing:.1em;font-weight:400}
+article .tags{display:flex;gap:6px;flex-wrap:wrap}
+article .tags span{font-family:var(--mono);font-size:10px;color:var(--mid);
+  border:1px solid var(--rule);padding:3px 9px;border-radius:2px}
+article .detail .links{margin-top:16px;font-family:var(--mono);font-size:10.5px}
+article .detail .links a{color:var(--accent);text-decoration:none;
+  border-bottom:1px solid var(--accent-soft);margin-right:18px}
+article .detail .links a:hover{border-color:var(--accent)}
+.meter{display:inline-block;width:46px;height:3px;background:var(--rule);
+  position:relative;vertical-align:middle;margin:0 5px}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--accent);
+  transition:width .9s cubic-bezier(.22,1,.36,1)}
+
+/* ── group cards ─────────────────────────────────────────────────────── */
+.grp{padding:22px 0;border-bottom:1px solid var(--rule)}
+.grp h2{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 4px}
+.grp .topics{font-size:14px;color:var(--mid)}
+.grp .members{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:7px}
+
+/* ── receipt: a quiet footnote ───────────────────────────────────────── */
+.receipt{margin:44px 0 0;padding-top:16px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:13px 22px}
+.receipt div b{display:block;color:var(--ink);font-weight:500;font-size:14px;
+  font-family:var(--sans);letter-spacing:-.01em}
+.receipt .flag{grid-column:1/-1;color:var(--accent)}
+
+/* ── inline extras ───────────────────────────────────────────────────── */
+.chart{margin:8px 0 0}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);font-weight:400;padding:7px 0;
+  border-bottom:1px solid var(--rule)}
+td{padding:9px 14px 9px 0;border-bottom:1px solid var(--rule);color:var(--mid)}
+td:first-child{color:var(--ink)}
+.err{margin-top:34px;padding:15px 17px;background:var(--accent-soft);
+  font-size:14px;color:#8c2718}
+.spin{display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--accent);animation:pulse 1.1s ease-in-out infinite;margin-right:8px;
+  vertical-align:middle}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1)}}
+footer{margin-top:76px;padding-top:18px;border-top:1px solid var(--rule);
+  font-family:var(--mono);font-size:10.5px;color:var(--faint);
+  display:flex;gap:20px;flex-wrap:wrap}
+footer i{font-style:normal;cursor:pointer}
+footer i:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="stage" id="stage">
+    <div class="mark"><b>Ball Knowledge</b> &nbsp;/&nbsp; MIT research, 152,713 works</div>
+    <h1>Ask for the research you want, not the words it contains.</h1>
+    <form id="f">
+      <textarea id="q" rows="1" autocomplete="off"
+        placeholder="machine learning on neural recordings, from groups that also build hardware"></textarea>
+      <button id="go" type="submit">Search</button>
+    </form>
+    <div class="prog" id="prog"><i></i></div>
+    <div class="steps" id="steps"></div>
+    <div class="hint" id="hint"></div>
+  </div>
+
+  <div id="out"></div>
+
+  <footer>
+    <i data-x="trend">LLM adoption at MIT</i>
+    <i data-x="groups">497 research groups</i>
+    <i data-x="bench">Benchmarks</i>
+    <span style="margin-left:auto" id="stat"></span>
+  </footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt=n=>(n??0).toLocaleString();
+const out=$("#out"), stage=$("#stage"), prog=$("#prog"), steps=$("#steps");
+
+/* autogrow */
+const q=$("#q");
+const grow=()=>{q.style.height="auto";q.style.height=Math.min(q.scrollHeight,260)+"px"};
+q.addEventListener("input",grow);
+q.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("#f").requestSubmit()}});
+
+const EX=["protein structure prediction using deep learning",
+  "superconducting qubit experiments, not theory",
+  "soft robotics with compliant actuators",
+  "large language models applied to biology"];
+$("#hint").innerHTML="Try "+EX.map(e=>`<i>${esc(e)}</i>`).join(" · ")+
+  " &nbsp;— or paste a resume.";
+$("#hint").onclick=e=>{if(e.target.tagName==="I"){q.value=e.target.textContent;grow();$("#f").requestSubmit()}};
+
+/* ── progress ──────────────────────────────────────────────────────── */
+const STEPS=["compile","filter","retrieve","gate","score","rank","explain"];
+let timer=null;
+function progStart(){
+  prog.classList.add("on"); let pct=4;
+  steps.innerHTML=STEPS.map(s=>`<span data-s="${s}">${s}</span>`).join("");
+  markStep(0,"live");
+  prog.querySelector("i").style.width="4%";
+  let i=0;
+  timer=setInterval(()=>{
+    pct=Math.min(pct+Math.random()*7,92);
+    prog.querySelector("i").style.width=pct+"%";
+    const n=Math.min(Math.floor(pct/13),STEPS.length-1);
+    if(n!==i){markStep(i,"done");markStep(n,"live");i=n}
+  },620);
+}
+function markStep(i,cls){
+  const el=steps.children[i]; if(el) el.className=cls;
+}
+function progEnd(receipt){
+  clearInterval(timer);
+  prog.querySelector("i").style.width="100%";
+  const st=(receipt&&receipt.stages_seconds)||{};
+  steps.innerHTML=STEPS.map(s=>
+    `<span class="done">${s}${st[s]!==undefined?` <em>${st[s].toFixed(2)}s</em>`:""}</span>`
+  ).join("");
+  setTimeout(()=>prog.classList.remove("on"),700);
+}
+function progFail(){clearInterval(timer);prog.classList.remove("on");steps.innerHTML=""}
+
+/* ── renderers ─────────────────────────────────────────────────────── */
+function receiptBlock(r){
+  const j=r.jev||{},l=r.llm||{};
+  const cell=(l1,v)=>`<div>${l1}<b>${v}</b></div>`;
+  return `<div class="receipt">
+    ${cell("candidates",fmt(r.candidates))}
+    ${cell("passed gate",fmt(r.passed_gate))}
+    ${cell("jev requests",fmt(j.requests))}
+    ${cell("jev tokens",fmt(j.input_tokens))}
+    ${cell("latency p50",(j.latency_p50??0)+"s")}
+    ${cell("total cost","$"+(r.total_cost_usd??0).toFixed(4))}
+    ${r.gate_relaxed?`<div class="flag">Gates relaxed — nothing cleared the threshold, showing best-scoring candidates.</div>`:""}
+    ${(r.filters_dropped||[]).length?`<div class="flag">${r.filters_dropped.length} compiler filter(s) dropped: they left under 200 documents.</div>`:""}
+  </div>`;
+}
+function paper(r,i){
+  const g=Math.round((r.gate_p??0)*100), s=Math.round((r.score_s??0)*100);
+  const url=r.doi?("https://doi.org/"+String(r.doi).replace(/^https?:\/\/doi\.org\//,"")):null;
+  const t=esc(r.title||"Untitled");
+  const auth=(r.authors||[]).map(a=>a.mit?`<b>${esc(a.name)}</b>`:esc(a.name)).join(", ");
+  const tags=[...(r.topic_names||[]).slice(0,3),...(r.keywords||[]).slice(0,4)]
+    .filter(Boolean).map(x=>`<span>${esc(x)}</span>`).join("");
+  const hasDetail=r.abstract||auth||tags;
+  return `<article>
+    <div class="idx">${String(i+1).padStart(2,"0")}</div>
+    <h2>${url?`<a href="${esc(url)}" target="_blank" rel="noopener">${t}</a>`:t}</h2>
+    <div class="meta">${esc(r.venue||"—")} · ${r.publication_year??"—"} · ${fmt(r.cited_by_count)} citations${r.field?" · "+esc(r.field):""}${r.n_authors?" · "+r.n_authors+" authors":""}</div>
+    ${r.why?`<div class="why-wrap"><span class="why">${esc(r.why)}</span></div>`:""}
+    <div class="sig">
+      <span>gate<span class="meter"><i data-w="${g}"></i></span>${g}%</span>
+      <span>score<span class="meter"><i data-w="${s}"></i></span>${s}%</span>
+      <span>rank ${(r.score??0).toFixed(3)}</span>
+      ${hasDetail?`<span class="more">Read</span>`:""}
+    </div>
+    ${hasDetail?`<div class="detail"><div class="inner">
+      ${auth?`<h4>Authors</h4><div class="auth">${auth}</div>`:""}
+      ${r.abstract?`<h4>Abstract</h4><p>${esc(r.abstract)}</p>`:""}
+      ${tags?`<h4>Topics</h4><div class="tags">${tags}</div>`:""}
+      <div class="links">
+        ${url?`<a href="${esc(url)}" target="_blank" rel="noopener">DOI ↗</a>`:""}
+        ${r.oa_url?`<a href="${esc(r.oa_url)}" target="_blank" rel="noopener">Open access ↗</a>`:""}
+        <a href="https://openalex.org/${esc(r.work_id)}" target="_blank" rel="noopener">OpenAlex ↗</a>
+      </div></div></div>`:""}
+  </article>`;
+}
+function fillMeters(){
+  requestAnimationFrame(()=>document.querySelectorAll(".meter i").forEach(
+    e=>e.style.width=(e.dataset.w||0)+"%"));
+}
+/* Wipe the highlighter across each reason, one after another. */
+function litUp(){
+  document.querySelectorAll("article").forEach((a,i)=>
+    setTimeout(()=>a.classList.add("lit"), 180+i*110));
+}
+/* One listener for every Read toggle, present and future. */
+document.addEventListener("click",e=>{
+  const m=e.target.closest(".more"); if(!m)return;
+  const art=m.closest("article"); const open=art.classList.toggle("open");
+  m.textContent=open?"Close":"Read";
+});
+
+/* ── the one action ────────────────────────────────────────────────── */
+$("#f").onsubmit=async e=>{
+  e.preventDefault();
+  const text=q.value.trim()||q.placeholder;
+  const btn=$("#go"); btn.disabled=true;
+  stage.classList.add("lifted");
+  out.innerHTML=`<div class="count"><span class="spin"></span>working</div>`;
+  progStart();
+  // A long paste is a person describing themselves, not a query.
+  const isProfile=text.length>400;
+  try{
+    if(isProfile){
+      const r=await api("/api/fit",{text,top_k:5});
+      progEnd(r.receipt);
+      out.innerHTML=
+        `<div class="count">Your profile</div>
+         <article><h2 style="font-size:19px">${esc(r.query)}</h2>
+           <div class="why">${esc(r.profile)}</div></article>
+         <div class="count">${(r.groups||[]).length} groups to talk to</div>`+
+        (r.groups||[]).map(g=>`<div class="grp">
+            <h2>${esc(g.lead_author||g.group_id)}</h2>
+            <div class="topics">${esc((g.top_topics||[]).slice(0,4).join(" · "))}</div>
+            <div class="members">${g.matching_papers} matching papers · ${esc((g.members||[]).slice(0,7).join(", "))}</div>
+          </div>`).join("")+
+        `<div class="count">Read these first</div>`+
+        (r.papers_to_read||[]).map(paper).join("")+
+        receiptBlock(r.receipt);
+    }else{
+      const rb=await api("/api/rubric",{query:text});
+      const res=await api("/api/search",{query:text,rubric:rb.rubric,top_k:20});
+      progEnd(res.receipt);
+      out.innerHTML=(res.results||[]).length
+        ? `<div class="count">${res.results.length} results</div>`+
+          res.results.map(paper).join("")+receiptBlock(res.receipt)
+        : `<div class="err">Nothing cleared the gates for this query.</div>`+
+          receiptBlock(res.receipt);
+    }
+    fillMeters(); litUp();
+  }catch(err){
+    progFail();
+    out.innerHTML=`<div class="err">${esc(err.message)}</div>`;
+  }
+  btn.disabled=false;
+};
+
+async function api(path,body){
+  const r=await fetch(path,{method:"POST",headers:{"content-type":"application/json"},
+    body:JSON.stringify(body)});
+  const d=await r.json();
+  if(!r.ok||d.detail) throw new Error(typeof d.detail==="string"?d.detail:`${path} failed (${r.status})`);
+  return d;
+}
+
+/* ── the three quiet links ─────────────────────────────────────────── */
+document.querySelector("footer").onclick=async e=>{
+  const k=e.target.dataset&&e.target.dataset.x; if(!k)return;
+  stage.classList.add("lifted");
+  out.innerHTML=`<div class="count"><span class="spin"></span>loading</div>`;
+  try{
+    if(k==="trend"){
+      const t=await (await fetch("/api/trend/llm_usage")).json();
+      const pts=(t.by_year||[]).filter(p=>p.year>=2015);
+      const s=t.stats||{};
+      out.innerHTML=`<div class="count">Share of MIT papers using large language models</div>
+        <div class="chart">${lineChart(pts)}</div>
+        <p style="color:var(--mid);font-size:14px;margin-top:20px">
+        ${fmt(t.n)} abstracts classified in ${(s.seconds??0).toFixed(0)}s for
+        $${(s.cost_usd??0).toFixed(2)}. Share is a count of yes answers — averaging
+        the probabilities instead overstated a labelled share by 3.85 points.
+        2015–2018 reads ~0%, which is the correct answer.</p>
+        <div class="count">By field</div>
+        <table><tr><th>Field</th><th>Share</th><th>Papers</th></tr>
+        ${(t.by_field||[]).map(f=>`<tr><td>${esc(f.field)}</td>
+          <td>${(f.share*100).toFixed(1)}%</td><td>${fmt(f.n)}</td></tr>`).join("")}</table>`;
+    }else if(k==="groups"){
+      const g=await (await fetch("/api/groups?limit=40")).json();
+      out.innerHTML=`<div class="count">Research groups recovered from co-authorship alone</div>`+
+        g.groups.map(x=>`<div class="grp"><h2>${esc(x.lead_author)}</h2>
+          <div class="topics">${esc((x.top_topics||[]).slice(0,4).join(" · "))}</div>
+          <div class="members">${x.size} members · ${fmt(x.n_papers)} papers · ${fmt(x.total_citations)} citations</div>
+        </div>`).join("");
+    }else{
+      const b=await (await fetch("/api/results/benchmark")).json();
+      let led=null; try{led=await (await fetch("/api/results/token_ledger")).json()}catch{}
+      out.innerHTML=`<div class="count">Enrichment accuracy — ${b.gold_size} gold items, Cohen's κ ${b.cohens_kappa}</div>
+        <table><tr><th>Arm</th><th>F1</th><th>95% CI</th><th>p50</th><th>$/1M</th></tr>
+        ${Object.entries(b.arms).map(([k2,v])=>`<tr><td>${esc(k2)}</td><td>${v.f1}</td>
+          <td>[${v.f1_ci95[0]}, ${v.f1_ci95[1]}]</td><td>${v.latency_p50}s</td>
+          <td>${v.projected_1m_usd!=null?"$"+v.projected_1m_usd:"—"}</td></tr>`).join("")}
+        </table>`+(led?`<div class="count">Same tokens, other models</div>
+        <table><tr><th>Model</th><th>Cost</th><th>×</th></tr>
+        ${Object.entries(led.counterfactual_input_only_usd||{}).map(([m,c])=>{
+          const base=led.counterfactual_input_only_usd["jev-1.13.0"]||1;
+          return `<tr><td>${esc(m)}</td><td>$${c.toFixed(2)}</td><td>${(c/base).toFixed(0)}×</td></tr>`
+        }).join("")}</table>`:"");
+    }
+  }catch(err){out.innerHTML=`<div class="err">${esc(err.message)}</div>`}
+};
+
+function lineChart(pts){
+  if(!pts.length)return "";
+  const W=680,H=230,P=34;
+  const xs=pts.map(p=>p.year),ys=pts.map(p=>p.share*100);
+  const x0=Math.min(...xs),x1=Math.max(...xs),ymax=Math.max(...ys,1)*1.25;
+  const X=v=>P+(v-x0)/Math.max(x1-x0,1)*(W-P*1.6);
+  const Y=v=>H-P-v/ymax*(H-P*1.7);
+  const line=pts.map((p,i)=>`${i?"L":"M"}${X(p.year).toFixed(1)},${Y(p.share*100).toFixed(1)}`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">
+    ${[0,ymax/2,ymax].map(v=>`<line x1="${P}" y1="${Y(v)}" x2="${W-P/2}" y2="${Y(v)}"
+      stroke="#e4e1db"/><text x="0" y="${Y(v)+4}" fill="#a8a49c" font-size="10"
+      font-family="ui-monospace,monospace">${v.toFixed(1)}%</text>`).join("")}
+    ${pts.map(p=>`<text x="${X(p.year)}" y="${H-P+17}" fill="#a8a49c" font-size="10"
+      font-family="ui-monospace,monospace" text-anchor="middle">${String(p.year).slice(2)}</text>`).join("")}
+    <path d="${line}" fill="none" stroke="#d4442f" stroke-width="1.6"/>
+    ${pts.map(p=>`<circle cx="${X(p.year)}" cy="${Y(p.share*100)}" r="2.6" fill="#d4442f">
+      <title>${p.year}: ${(p.share*100).toFixed(2)}% (${fmt(p.count??0)} of ${fmt(p.n)})</title></circle>`).join("")}
+  </svg>`;
+}
+
+fetch("/api/health").then(r=>r.json()).then(h=>{
+  $("#stat").textContent=`${fmt(h.works)} works · ${fmt(h.groups)} groups`;
+}).catch(()=>{});
+grow();
+</script>
+</body>
+</html>

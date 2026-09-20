@@ -1,14 +1,26 @@
+# JavaScript / TypeScript
 node_modules/
 dist/
+coverage/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets
 .env
 .env.*
 !.env.example
+
+# Generated databases, caches, and source corpora
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
 *.sqlite.tmp*
 data/*.sqlite*
-!.gitkeep
-coverage/
+data/givecampus/
+
+# Local tools
 .banyancode/

@@ -1,0 +1,259 @@
+{
+  "n_sampled": 300,
+  "gold_size": 296,
+  "ambiguous": 4,
+  "judges": [
+    "gpt-6-astra",
+    "gpt-5.5"
+  ],
+  "cohens_kappa": 0.9644,
+  "raw_judge_agreement": 0.9867,
+  "corpus_n": 118354,
+  "bootstrap_rounds": 1000,
+  "prices_used": {
+    "jev_packed25": {
+      "in": 0.042,
+      "out": 0.0
+    },
+    "jev_per_item": {
+      "in": 0.042,
+      "out": 0.0
+    },
+    "gpt-5.2": {
+      "in": 1.75,
+      "out": 14.0
+    },
+    "gpt-5.6-sol": {
+      "in": 4.0,
+      "out": 20.0
+    },
+    "glm-5.3-flash": {
+      "in": 0.15,
+      "out": 0.5
+    },
+    "deepseek-v4-flash": {
+      "in": 0.15,
+      "out": 0.6
+    },
+    "mimo-v2.5": null
+  },
+  "arms": {
+    "jev_packed25": {
+      "model": "jev-1.13.0",
+      "seconds": 1.0,
+      "items_per_sec": 296.4,
+      "requests": 12,
+      "input_tokens": 132698,
+      "output_tokens": 6348,
+      "latency_p50": 0.756,
+      "latency_p95": 0.864,
+      "cost_usd": 0.005573,
+      "priced": true,
+      "cost_per_1k": 0.01858,
+      "projected_corpus_usd": 2.2,
+      "projected_1m_usd": 18.58,
+      "precision": 0.7727,
+      "recall": 0.6986,
+      "f1": 0.7338,
+      "precision_ci95": [
+        0.6712,
+        0.878
+      ],
+      "recall_ci95": [
+        0.5902,
+        0.8028
+      ],
+      "f1_ci95": [
+        0.6462,
+        0.8065
+      ],
+      "win_rate_f1": 0.0
+    },
+    "jev_per_item": {
+      "model": "jev-1.13.0",
+      "seconds": 6.9,
+      "items_per_sec": 43.6,
+      "requests": 300,
+      "input_tokens": 198122,
+      "output_tokens": 6000,
+      "latency_p50": 0.2,
+      "latency_p95": 0.357,
+      "cost_usd": 0.008321,
+      "priced": true,
+      "cost_per_1k": 0.02774,
+      "projected_corpus_usd": 3.28,
+      "projected_1m_usd": 27.74,
+      "precision": 0.9722,
+      "recall": 0.9589,
+      "f1": 0.9655,
+      "precision_ci95": [
+        0.9275,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9057,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9302,
+        0.9929
+      ],
+      "win_rate_f1": 0.023
+    },
+    "gpt-5.2": {
+      "model": "gpt-5.2",
+      "seconds": 23.8,
+      "items_per_sec": 12.6,
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 3300,
+      "latency_p50": 0.77,
+      "latency_p95": 0.951,
+      "cost_usd": 0.206764,
+      "priced": true,
+      "cost_per_1k": 0.68921,
+      "projected_corpus_usd": 81.57,
+      "projected_1m_usd": 689.21,
+      "precision": 1.0,
+      "recall": 0.9589,
+      "f1": 0.979,
+      "precision_ci95": [
+        1.0,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9024,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9487,
+        1.0
+      ],
+      "win_rate_f1": 0.153
+    },
+    "gpt-5.6-sol": {
+      "model": "gpt-5.6-sol",
+      "seconds": 37.0,
+      "items_per_sec": 8.1,
+      "requests": 300,
+      "input_tokens": 91751,
+      "output_tokens": 6543,
+      "latency_p50": 0.984,
+      "latency_p95": 1.856,
+      "cost_usd": 0.497864,
+      "priced": true,
+      "cost_per_1k": 1.65955,
+      "projected_corpus_usd": 196.41,
+      "projected_1m_usd": 1659.55,
+      "precision": 1.0,
+      "recall": 0.9863,
+      "f1": 0.9931,
+      "precision_ci95": [
+        1.0,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9538,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9764,
+        1.0
+      ],
+      "win_rate_f1": 0.698
+    },
+    "glm-5.3-flash": {
+      "model": "glm-5.3-flash",
+      "seconds": 58.9,
+      "items_per_sec": 5.1,
+      "requests": 300,
+      "input_tokens": 95097,
+      "output_tokens": 6185,
+      "latency_p50": 1.287,
+      "latency_p95": 5.741,
+      "cost_usd": 0.017357,
+      "priced": true,
+      "cost_per_1k": 0.05786,
+      "projected_corpus_usd": 6.85,
+      "projected_1m_usd": 57.86,
+      "precision": 0.9859,
+      "recall": 0.9589,
+      "f1": 0.9722,
+      "precision_ci95": [
+        0.9516,
+        1.0
+      ],
+      "recall_ci95": [
+        0.907,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9403,
+        0.9934
+      ],
+      "win_rate_f1": 0.0
+    },
+    "deepseek-v4-flash": {
+      "model": "deepseek-v4-flash",
+      "seconds": 89.5,
+      "items_per_sec": 3.4,
+      "requests": 300,
+      "input_tokens": 113459,
+      "output_tokens": 23292,
+      "latency_p50": 1.225,
+      "latency_p95": 11.419,
+      "cost_usd": 0.030994,
+      "priced": true,
+      "cost_per_1k": 0.10331,
+      "projected_corpus_usd": 12.23,
+      "projected_1m_usd": 103.31,
+      "precision": 0.973,
+      "recall": 0.9863,
+      "f1": 0.9796,
+      "precision_ci95": [
+        0.9296,
+        1.0
+      ],
+      "recall_ci95": [
+        0.9538,
+        1.0
+      ],
+      "f1_ci95": [
+        0.9538,
+        1.0
+      ],
+      "win_rate_f1": 0.126
+    },
+    "mimo-v2.5": {
+      "model": "mimo-v2.5",
+      "seconds": 40.0,
+      "items_per_sec": 7.5,
+      "requests": 300,
+      "input_tokens": 166434,
+      "output_tokens": 2508,
+      "latency_p50": 1.1,
+      "latency_p95": 2.472,
+      "cost_usd": null,
+      "priced": false,
+      "cost_per_1k": null,
+      "projected_corpus_usd": null,
+      "projected_1m_usd": null,
+      "precision": 0.5231,
+      "recall": 0.9726,
+      "f1": 0.6803,
+      "precision_ci95": [
+        0.2508,
+        0.987
+      ],
+      "recall_ci95": [
+        0.9306,
+        1.0
+      ],
+      "f1_ci95": [
+        0.396,
+        0.9865
+      ],
+      "win_rate_f1": 0.0
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "n_items": 200,
+  "question": "llm_usage",
+  "reference_positives": 3,
+  "rows": [
+    {
+      "per_request": 1,
+      "seconds": 4.21,
+      "requests": 200,
+      "input_tokens": 128458,
+      "output_tokens": 4200,
+      "cost_usd": 0.005395,
+      "agreement": 1.0,
+      "mad": 0.0,
+      "returned": 200,
+      "items_per_sec": 47.5
+    },
+    {
+      "per_request": 10,
+      "seconds": 1.79,
+      "requests": 20,
+      "input_tokens": 87818,
+      "output_tokens": 4480,
+      "cost_usd": 0.003688,
+      "agreement": 0.975,
+      "mad": 0.0353,
+      "returned": 200,
+      "items_per_sec": 111.5
+    },
+    {
+      "per_request": 25,
+      "seconds": 0.94,
+      "requests": 8,
+      "input_tokens": 84842,
+      "output_tokens": 4432,
+      "cost_usd": 0.003563,
+      "agreement": 0.98,
+      "mad": 0.0507,
+      "returned": 200,
+      "items_per_sec": 213.0
+    },
+    {
+      "per_request": 50,
+      "seconds": 0.82,
+      "requests": 4,
+      "input_tokens": 83850,
+      "output_tokens": 4416,
+      "cost_usd": 0.003522,
+      "agreement": 0.915,
+      "mad": 0.1418,
+      "returned": 200,
+      "items_per_sec": 243.6
+    },
+    {
+      "per_request": 100,
+      "seconds": 1.51,
+      "requests": 2,
+      "input_tokens": 83354,
+      "output_tokens": 4408,
+      "cost_usd": 0.003501,
+      "agreement": 0.805,
+      "mad": 0.2548,
+      "returned": 200,
+      "items_per_sec": 132.2
+    },
+    {
+      "per_request": 150,
+      "error": "TypeSafeBadRequestError: POST https://api.typesafe.ai/v1/systemone: 400 {\"detail\":{\"error_type\":\"max_tokens_exceeded\"}} (request_id=req_01a0bdc2549e7323b3a93aad187d7401)"
+    }
+  ]
+}

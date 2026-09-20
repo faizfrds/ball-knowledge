@@ -1,0 +1,16 @@
+{
+  "pool": 8000,
+  "queries": [
+    "protein structure prediction using deep learning",
+    "superconducting qubit experiments, not theory",
+    "soft robotics with compliant actuators",
+    "reinforcement learning on real physical robots, not simulation",
+    "microfluidic devices for single cell analysis"
+  ],
+  "precision_at_10_by_weight": {
+    "0.0": 0.66,
+    "0.2": 0.7,
+    "0.4": 0.72,
+    "0.6": 0.7
+  }
+}

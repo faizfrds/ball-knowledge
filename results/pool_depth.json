@@ -1,0 +1,12 @@
+{
+  "queries": [
+    "protein structure prediction using deep learning",
+    "superconducting qubit experiments, not theory",
+    "soft robotics with compliant actuators"
+  ],
+  "precision_at_10_by_pool": {
+    "20000": 0.7667,
+    "3000": 0.8667,
+    "1500": 0.8667
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "question": "llm_usage",
+  "n": 118354,
+  "stats": {
+    "seconds": 0,
+    "items": 0
+  },
+  "estimator": "count of p>=0.5 (mean probability is reported alongside but is not used: it overstated a labelled share by 3.85 pp)",
+  "by_year": [
+    {
+      "year": 2015,
+      "n": 8316,
+      "share": 0.0,
+      "mean_prob_share": 0.0119,
+      "count": 0
+    },
+    {
+      "year": 2016,
+      "n": 8388,
+      "share": 0.0001,
+      "mean_prob_share": 0.0118,
+      "count": 1
+    },
+    {
+      "year": 2017,
+      "n": 8717,
+      "share": 0.0001,
+      "mean_prob_share": 0.0133,
+      "count": 1
+    },
+    {
+      "year": 2018,
+      "n": 9096,
+      "share": 0.0001,
+      "mean_prob_share": 0.0133,
+      "count": 1
+    },
+    {
+      "year": 2019,
+      "n": 11483,
+      "share": 0.0024,
+      "mean_prob_share": 0.0227,
+      "count": 28
+    },
+    {
+      "year": 2020,
+      "n": 11548,
+      "share": 0.0055,
+      "mean_prob_share": 0.0212,
+      "count": 63
+    },
+    {
+      "year": 2021,
+      "n": 10957,
+      "share": 0.007,
+      "mean_prob_share": 0.0206,
+      "count": 77
+    },
+    {
+      "year": 2022,
+      "n": 9662,
+      "share": 0.0051,
+      "mean_prob_share": 0.0191,
+      "count": 49
+    },
+    {
+      "year": 2023,
+      "n": 10393,
+      "share": 0.0126,
+      "mean_prob_share": 0.0261,
+      "count": 131
+    },
+    {
+      "year": 2024,
+      "n": 10027,
+      "share": 0.028,
+      "mean_prob_share": 0.0414,
+      "count": 281
+    },
+    {
+      "year": 2025,
+      "n": 10180,
+      "share": 0.0415,
+      "mean_prob_share": 0.0548,
+      "count": 422
+    },
+    {
+      "year": 2026,
+      "n": 9587,
+      "share": 0.0621,
+      "mean_prob_share": 0.0745,
+      "count": 595
+    }
+  ],
+  "by_field": [
+    {
+      "field": "Computer Science",
+      "n": 13032,
+      "share": 0.0603
+    },
+    {
+      "field": "Social Sciences",
+      "n": 4298,
+      "share": 0.0349
+    },
+    {
+      "field": "Decision Sciences",
+      "n": 1512,
+      "share": 0.0311
+    },
+    {
+      "field": "Psychology",
+      "n": 2136,
+      "share": 0.0309
+    },
+    {
+      "field": "Health Professions",
+      "n": 526,
+      "share": 0.019
+    },
+    {
+      "field": "Arts and Humanities",
+      "n": 606,
+      "share": 0.0132
+    },
+    {
+      "field": "Materials Science",
+      "n": 5570,
+      "share": 0.0122
+    },
+    {
+      "field": "Business, Management and Accounting",
+      "n": 1321,
+      "share": 0.0106
+    },
+    {
+      "field": "Medicine",
+      "n": 12156,
+      "share": 0.009
+    },
+    {
+      "field": "Biochemistry, Genetics and Molecular Biology",
+      "n": 10558,
+      "share": 0.0085
+    },
+    {
+      "field": "Neuroscience",
+      "n": 5880,
+      "share": 0.0083
+    },
+    {
+      "field": "Engineering",
+      "n": 18722,
+      "share": 0.0059
+    }
+  ]
+}

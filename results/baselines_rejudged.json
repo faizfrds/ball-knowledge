@@ -1,0 +1,78 @@
+{
+  "judge": "deepseek-v4-flash",
+  "original_judge": "gpt-5.2",
+  "k": 10,
+  "queries": [
+    "MIT groups using machine learning on neural recordings who also build hardware",
+    "work on protein structure prediction that uses deep learning",
+    "quantum computing experiments with superconducting qubits, not theory",
+    "robotics research involving soft actuators or compliant materials",
+    "climate modeling work that assimilates satellite observations",
+    "battery materials research using computational screening",
+    "papers that apply large language models to biology or chemistry",
+    "causal inference methods applied to economics or policy evaluation",
+    "photonic integrated circuits for communication, built and measured",
+    "CRISPR gene editing delivery methods in living animals",
+    "reinforcement learning applied to real physical robots, not simulation",
+    "microfluidic devices for single cell analysis",
+    "fairness or bias auditing of deployed machine learning systems",
+    "materials discovered or characterized with electron microscopy",
+    "wearable sensors that measure physiological signals continuously",
+    "cryptography research on zero knowledge proofs",
+    "urban mobility or transportation network optimization",
+    "immunotherapy research involving T cell engineering",
+    "energy grid optimization under renewable intermittency",
+    "speech or audio models trained on large datasets"
+  ],
+  "judged_pairs": 585,
+  "summary": {
+    "bm25": {
+      "precision_at_10": 0.505,
+      "ndcg_at_10": 0.7839,
+      "median_seconds": 0.06,
+      "cost_per_query_usd": 0.0,
+      "previous_ndcg_same_family_judge": 0.6805,
+      "p_at_k_ci95": [
+        0.395,
+        0.62
+      ],
+      "ndcg_ci95": [
+        0.6681,
+        0.8815
+      ],
+      "win_rate_ndcg": 0.0
+    },
+    "semantic": {
+      "precision_at_10": 0.58,
+      "ndcg_at_10": 0.8304,
+      "median_seconds": 0.63,
+      "cost_per_query_usd": 0.0,
+      "previous_ndcg_same_family_judge": 0.7007,
+      "p_at_k_ci95": [
+        0.465,
+        0.695
+      ],
+      "ndcg_ci95": [
+        0.7226,
+        0.9139
+      ],
+      "win_rate_ndcg": 0.0
+    },
+    "ball": {
+      "precision_at_10": 0.68,
+      "ndcg_at_10": 0.8567,
+      "median_seconds": 41.13,
+      "cost_per_query_usd": 0.1638,
+      "previous_ndcg_same_family_judge": 0.8556,
+      "p_at_k_ci95": [
+        0.545,
+        0.8
+      ],
+      "ndcg_ci95": [
+        0.7361,
+        0.9448
+      ],
+      "win_rate_ndcg": 0.005
+    }
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "question": "llm_usage",
+  "n": 118354,
+  "stats": {
+    "seconds": 0,
+    "items": 0
+  },
+  "by_year": [
+    {
+      "year": 2015,
+      "n": 8316,
+      "share": 0.0225,
+      "expected_count": 187.0
+    },
+    {
+      "year": 2016,
+      "n": 8388,
+      "share": 0.0236,
+      "expected_count": 198.2
+    },
+    {
+      "year": 2017,
+      "n": 8717,
+      "share": 0.0262,
+      "expected_count": 228.0
+    },
+    {
+      "year": 2018,
+      "n": 9096,
+      "share": 0.0285,
+      "expected_count": 259.6
+    },
+    {
+      "year": 2019,
+      "n": 11483,
+      "share": 0.0344,
+      "expected_count": 394.5
+    },
+    {
+      "year": 2020,
+      "n": 11548,
+      "share": 0.0407,
+      "expected_count": 470.4
+    },
+    {
+      "year": 2021,
+      "n": 10957,
+      "share": 0.0462,
+      "expected_count": 506.3
+    },
+    {
+      "year": 2022,
+      "n": 9662,
+      "share": 0.0443,
+      "expected_count": 427.8
+    },
+    {
+      "year": 2023,
+      "n": 10393,
+      "share": 0.0582,
+      "expected_count": 604.5
+    },
+    {
+      "year": 2024,
+      "n": 10027,
+      "share": 0.0883,
+      "expected_count": 885.4
+    },
+    {
+      "year": 2025,
+      "n": 10180,
+      "share": 0.1092,
+      "expected_count": 1112.1
+    },
+    {
+      "year": 2026,
+      "n": 9587,
+      "share": 0.1397,
+      "expected_count": 1339.4
+    }
+  ],
+  "by_field": [
+    {
+      "field": "Computer Science",
+      "n": 13032,
+      "share": 0.0879
+    },
+    {
+      "field": "Psychology",
+      "n": 2136,
+      "share": 0.069
+    },
+    {
+      "field": "Social Sciences",
+      "n": 4298,
+      "share": 0.0679
+    },
+    {
+      "field": "Health Professions",
+      "n": 526,
+      "share": 0.0668
+    },
+    {
+      "field": "Decision Sciences",
+      "n": 1512,
+      "share": 0.0623
+    },
+    {
+      "field": "Pharmacology, Toxicology and Pharmaceutics",
+      "n": 221,
+      "share": 0.056
+    },
+    {
+      "field": "Arts and Humanities",
+      "n": 606,
+      "share": 0.0553
+    },
+    {
+      "field": "Neuroscience",
+      "n": 5880,
+      "share": 0.055
+    },
+    {
+      "field": "Medicine",
+      "n": 12156,
+      "share": 0.0532
+    },
+    {
+      "field": "Biochemistry, Genetics and Molecular Biology",
+      "n": 10558,
+      "share": 0.0512
+    },
+    {
+      "field": "Materials Science",
+      "n": 5570,
+      "share": 0.0508
+    },
+    {
+      "field": "Business, Management and Accounting",
+      "n": 1321,
+      "share": 0.0494
+    }
+  ]
+}

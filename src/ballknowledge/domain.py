@@ -40,6 +40,10 @@ class Domain:
     # with forty hours and thousands of names.
     value_of: Callable[[dict], float] | None = None
     value_label: str = ""
+    # How many gate survivors get the expensive full-rubric pass. Lower it where the
+    # gates are permissive: on the constituent file they passed more than the old cap
+    # of 600, so the cap itself was doing the filtering rather than the rubric.
+    full_rubric_max: int = 600
 
 
 def _fmt(row: dict, fields: list[str] | None, order: list[str]) -> str:
@@ -185,6 +189,7 @@ dates that are already columns.
     ],
     value_of=_constituent_value,
     value_label="dollars at stake",
+    full_rubric_max=300,
 )
 
 DOMAINS = {d.name: d for d in (WORKS, CONSTITUENTS)}

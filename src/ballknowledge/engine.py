@@ -23,7 +23,7 @@ from .sanitize import clean_query, filter_filters
 
 PACK = 25          # items per gate request; see benchmark.json for the accuracy cost
 GATE_PASS = 0.5    # floor on the COMBINED gate score (geometric mean, see below)
-FULL_RUBRIC_MAX = 600
+FULL_RUBRIC_MAX = 600   # default; a domain may lower it (see Domain.full_rubric_max)
 MIN_POOL = 200     # below this, a compiler-invented filter is doing more harm than good
 
 # Jev allows 1,200 requests/min (20/s). At ~2.8 s per packed request, 12 workers use
@@ -53,6 +53,7 @@ class Receipt:
     llm: dict = field(default_factory=dict)
     gate_relaxed: bool = False
     judged: int = 0
+    gate_survivors: int = 0
     filters_dropped: list = field(default_factory=list)
     filters_rejected: list = field(default_factory=list)
 
@@ -64,6 +65,7 @@ class Receipt:
         return {"query": self.query, "stages_seconds": self.stages,
                 "candidates": self.candidates, "passed_gate": self.gated,
                 "fully_scored": self.scored, "judged": self.judged,
+                "gate_survivors": self.gate_survivors,
                 "jev": self.jev, "llm": self.llm,
                 "gate_relaxed": self.gate_relaxed,
                 "filters_dropped": self.filters_dropped,
@@ -193,6 +195,7 @@ class Engine:
         ret_rank = {w: i for i, w in enumerate(cand_ids)}
 
         jev = JevClient(workers=GATE_WORKERS)
+        top_n = self.domain.full_rubric_max or FULL_RUBRIC_MAX
         gate_fields = (sorted({f for g in rubric.gates for f in g.get("fields", [])})
                        or self.domain.default_fields)
 
@@ -226,13 +229,14 @@ class Engine:
             # and say so in the receipt rather than showing an empty page.
             if len(survivors) < 10:
                 ranked = sorted(cand_ids, key=lambda w: -gate_p[w])
-                survivors = [w for w in ranked[:FULL_RUBRIC_MAX] if gate_p[w] > 0.05]
+                survivors = [w for w in ranked[:top_n] if gate_p[w] > 0.05]
                 r.gate_relaxed = True
         else:
             gate_p = {w: 1.0 for w in cand_ids}
             survivors = list(cand_ids)
         survivors.sort(key=lambda w: -gate_p[w])
-        survivors = survivors[:FULL_RUBRIC_MAX]
+        r.gate_survivors = len(survivors)       # before the cap, so the cap is visible
+        survivors = survivors[:top_n]
         r.gated = len(survivors)
         r.stages["gate"] = round(time.time() - t, 2)
         if on_progress:

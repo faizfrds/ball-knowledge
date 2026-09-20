@@ -17,6 +17,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@typesafe-ai/sdk": "^0.6.0",
     "better-sqlite3": "^11.10.0"
   },
   "devDependencies": {

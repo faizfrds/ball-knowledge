@@ -15,7 +15,7 @@ import { EVIDENCE_VERSION } from "../givecampus/criterion.js";
 import { evaluateLlmRubricCandidate, MapLlmRubricCache } from "../benchmark/llm-rubric-adapter.js";
 import { evaluateRubricForCandidate, TypesafeDynamicJevClient,
   type CandidateRubricEvaluation, type DynamicRubric } from "../pipeline/jev-evaluator.js";
-import { compilePipelineRubric, DEFAULT_RUBRIC_PLANNER_MODEL } from "../llm/pipeline-rubric.js";
+import { compilePipelineRubric, DEFAULT_RUBRIC_PLANNER_MODEL, type PipelineCompileOutcome } from "../llm/pipeline-rubric.js";
 import { buildFinalDecisionQuestion, evaluateFinalTopTwentyActions, type FinalAction } from "../pipeline/final-decision.js";
 import { FIELD_NAMES } from "../pipeline/rubric.js";
 import { rankByRubric } from "../pipeline/rank.js";
@@ -248,7 +248,16 @@ async function main(): Promise<void> {
     if (!vectors.status.available) throw new Error(`Exact full-corpus vectors unavailable: ${vectors.status.reason}`);
     const embeddingTelemetry = JSON.parse(fs.readFileSync(EMBEDDING_TELEMETRY_PATH, "utf8")) as Record<string, unknown>;
     const embedder = new OpenAIEmbeddingsClient({ apiKey: process.env.OPENAI_API_KEY! });
+    const previousReport = fs.existsSync(JSON_PATH)
+      ? JSON.parse(fs.readFileSync(JSON_PATH, "utf8")) as { queries?: Array<{ id?: string; rubricPlanner?: { requestedModel?: string; telemetry?: unknown; rubric?: unknown } }> }
+      : null;
+    const previousPlans = new Map((previousReport?.queries ?? []).flatMap((row) =>
+      row.id && row.rubricPlanner?.requestedModel === DEFAULT_RUBRIC_PLANNER_MODEL && row.rubricPlanner.rubric
+        ? [[row.id, row.rubricPlanner] as const] : []));
     const plannedRubrics = new Map(await Promise.all(frozen.queries.map(async (query) => {
+      const cached = previousPlans.get(query.id);
+      if (cached) return [query.id, { rubric: cached.rubric as PipelineCompileOutcome["rubric"], fallback: false,
+        reason: null, telemetry: cached.telemetry as PipelineCompileOutcome["telemetry"] }] as const;
       const outcome = await compilePipelineRubric(query.query, FIELD_NAMES, {
         model: DEFAULT_RUBRIC_PLANNER_MODEL,
         timeoutMs: 60_000,
@@ -293,7 +302,10 @@ async function main(): Promise<void> {
       const retrievalStarted = Date.now();
       const retrieval = await retrieveCandidates(cards, plan.rubric.phrasings, {
         candidateCap: CANDIDATE_CAP,
-        filters: plan.rubric.filters,
+        // Planner filters often describe semantic concepts rather than exact
+        // code-derived band values. Retrieval stays broad; Jev judges those
+        // concepts through the scoped gates and weighted criteria instead.
+        filters: [],
         embedder,
         embeddingCache: vectorCache,
         batchSize: 500,
@@ -408,7 +420,7 @@ async function main(): Promise<void> {
       population: { eligibility: "checkEligibility eligibleForContact as of cutoff", eligibleN: eligibleIds.length,
         totalConstituentRows: constituents.length },
       retrieval: { semantic: "full-population cosine ranking over cached text-embedding-3-small vectors",
-        hybrid: "GPT-5.6 Luna compiles query-specific typed filters and retrieval phrasings; BM25 and embedding rank lists fuse with RRF k=60 to select at most 2,000 candidates",
+        hybrid: "GPT-5.6 Luna compiles query-specific retrieval phrasings; BM25 and embedding rank lists fuse with RRF k=60 to select at most 2,000 candidates. Planner filters are retained for audit but not applied because semantic concepts must be judged by Jev against raw fields.",
         candidatePoolSize: Math.min(CANDIDATE_CAP, eligibleIds.length), vectorCacheSize,
         embedding: { ...vectors.status, usage: embeddingTelemetry } },
       rubricPlanning: { model: DEFAULT_RUBRIC_PLANNER_MODEL,

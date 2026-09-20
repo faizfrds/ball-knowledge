@@ -1,5 +1,7 @@
 # Targeted Scenario Analysis: Stewardship + Upgrade
 
+> Superseded by the full GPT-5.6 Luna-planned benchmark. See [FINAL_BENCHMARK_REPORT.md](FINAL_BENCHMARK_REPORT.md). The current complete pipeline wins the full four-query aggregate with 44 relevant top-20 hits and mean NDCG@20 of 0.3956.
+
 **This is a post-hoc sensitivity analysis, not the overall benchmark result.** The two included queries were selected after inspecting the full results because they are the stewardship and upgrade cases where Jev improved top-20 hits. The lapsed-donor and reunion cases are shown below rather than hidden.
 
 The benchmark used 14,052 eligible constituents as of 2025-08-31. Semantic and BM25 retrieval formed the same top-2,000 candidate pool for the hybrid systems; Jev ranked that pool using raw, scoped constituent fields. It received no embeddings or retrieval scores.

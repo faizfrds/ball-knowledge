@@ -13,7 +13,8 @@ import { loadServerEnv } from "../env.js";
 import { checkEligibility, type ConstituentEligibilityRow } from "../givecampus/eligibility.js";
 import { EVIDENCE_VERSION } from "../givecampus/criterion.js";
 import { evaluateLlmRubricCandidate, MapLlmRubricCache } from "../benchmark/llm-rubric-adapter.js";
-import { TypesafeDynamicJevClient } from "../pipeline/jev-evaluator.js";
+import { evaluateRubricForCandidate, TypesafeDynamicJevClient,
+  type CandidateRubricEvaluation, type DynamicRubric, type PipelineField } from "../pipeline/jev-evaluator.js";
 import { buildFinalDecisionQuestion, evaluateFinalTopTwentyActions, type FinalAction } from "../pipeline/final-decision.js";
 import { SqliteQuestionAnswerCache } from "../pipeline/question-cache.js";
 import { rankBm25 } from "../retrieval/bm25.js";
@@ -43,6 +44,24 @@ const ACTION_QUESTIONS: Record<string, string> = {
   q3_reunion_reengagement: "Given this alumnus's class-year, affinity, and giving context, which one next action best supports reunion reengagement? Choose exactly one supplied action key; never abstain or invent another label.",
   q4_upgrade_ask_review: "Given the recorded giving, engagement, and career context, which one next action is appropriate? Treat title and employer as context only, not proof of capacity. Choose exactly one supplied action key; never abstain or invent another label.",
 };
+const RERANK_FIELDS: Record<string, PipelineField[]> = {
+  q1_lapsed_loyal_engaged: ["gift_recency_band", "gift_frequency_band", "engagement_events", "interaction_summary", "career_change_band", "solicitation_fatigue_band", "contactability"],
+  q2_stewardship_before_ask: ["gift_recency_band", "giving_amount_band", "interaction_summary", "contactability"],
+  q3_reunion_reengagement: ["affiliation_type", "class_year", "gift_recency_band", "engagement_events", "interaction_summary", "solicitation_fatigue_band"],
+  q4_upgrade_ask_review: ["gift_frequency_band", "gift_recency_band", "giving_amount_band", "engagement_events", "interaction_summary", "career_change_band", "solicitation_fatigue_band"],
+};
+const RERANK_QUESTIONS: Record<string, string> = {
+  q1_lapsed_loyal_engaged: "How strong is the constituent's priority for personal outreach, considering lapsed giving, prior loyalty, current engagement, career momentum, and solicitation fatigue?",
+  q2_stewardship_before_ask: "How urgent and well-supported is a stewardship thank-you, considering gift recency and amount bands plus recorded acknowledgement context?",
+  q3_reunion_reengagement: "How strong is the constituent's fit for reunion reengagement, considering alumni/class-year context, lapsed giving, affinity, and solicitation fatigue?",
+  q4_upgrade_ask_review: "How strong is the evidence for a personal upgrade conversation, considering giving consistency, increasing engagement, and career context; do not infer wealth or capacity from title or employer?",
+};
+const RERANK_LEVELS: [string, string, ...string[]] = [
+  "Very low priority: the listed fields provide little support for this query.",
+  "Low priority: there is limited or incomplete supporting evidence.",
+  "Moderate priority: several listed fields support a relevant next step.",
+  "High priority: multiple independent listed fields strongly support this query's next step.",
+];
 const ACTION_OPTIONS: Record<string, Record<FinalAction, string>> = {
   q1_lapsed_loyal_engaged: {
     thank_you: "Choose only when giving recency and interaction context indicate a recent gift still needing stewardship.",
@@ -88,6 +107,36 @@ function actionGold(queryId: string, gold: GradedLabel, canSolicit: boolean): Fi
   if (queryId === "q3_reunion_reengagement") return gold.action === "reunion_mailer" ? "reunion_mailer" : "event_invite";
   if (queryId === "q4_upgrade_ask_review") return gold.action === "ask" && canSolicit ? "ask" : "event_invite";
   return null;
+}
+
+function buildRerankRubric(queryId: string): DynamicRubric {
+  return {
+    id: `complex-rerank-${queryId}`,
+    version: "jev-rerank-v1",
+    gates: [],
+    scores: [{ id: "query_priority", question: RERANK_QUESTIONS[queryId]!,
+      levels: [...RERANK_LEVELS] as [string, string, ...string[]], fields: RERANK_FIELDS[queryId]!, weight: 1 }],
+    bonuses: [], tags: [],
+  };
+}
+
+function summarizeJevRerank(evaluations: CandidateRubricEvaluation[]) {
+  const answers = evaluations.map((row) => row.scores.query_priority).filter(Boolean);
+  const live = answers.filter((row) => !row!.cacheHit && row!.model !== null);
+  const models: Record<string, number> = {};
+  for (const answer of answers) if (answer!.model) models[answer!.model] = (models[answer!.model] ?? 0) + 1;
+  return {
+    evaluatedN: evaluations.length,
+    liveCalls: live.length,
+    cacheHits: answers.filter((row) => row!.cacheHit).length,
+    unknownScores: answers.filter((row) => row!.status === "unknown").length,
+    resolvedModelCounts: models,
+    inputTokens: answers.reduce((sum, row) => sum + row!.inputTokens, 0),
+    outputTokens: answers.reduce((sum, row) => sum + row!.outputTokens, 0),
+    cachedInputTokens: answers.reduce((sum, row) => sum + row!.cachedInputTokens, 0),
+    cachedOutputTokens: answers.reduce((sum, row) => sum + row!.cachedOutputTokens, 0),
+    latencyMs: { p50: percentile(live.map((row) => row!.latencyMs), 0.5), p95: percentile(live.map((row) => row!.latencyMs), 0.95) },
+  };
 }
 
 function actionMetrics(
@@ -157,14 +206,21 @@ function summaryLlm(results: Awaited<ReturnType<typeof evaluateLlmRubricCandidat
   };
 }
 
-async function parallelMap<T, U>(items: readonly T[], concurrency: number, fn: (item: T, index: number) => Promise<U>): Promise<U[]> {
+async function parallelMap<T, U>(items: readonly T[], concurrency: number, fn: (item: T, index: number) => Promise<U>, onProgress?: (completed: number) => void): Promise<U[]> {
   const results = new Array<U>(items.length);
   let next = 0;
+  let completed = 0;
+  const progressLock: { active: boolean } = { active: false };
   async function worker(): Promise<void> {
     for (;;) {
       const index = next++;
       if (index >= items.length) return;
       results[index] = await fn(items[index]!, index);
+      completed++;
+      if (onProgress && completed % 250 === 0 && !progressLock.active) {
+        progressLock.active = true;
+        try { onProgress(completed); } finally { progressLock.active = false; }
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
@@ -256,9 +312,37 @@ async function main(): Promise<void> {
       const hybridSeen = new Set(hybridRetrieved);
       const hybridRanked = [...hybridRetrieved, ...eligibleIds.filter((id) => !hybridSeen.has(id))];
       const hybridMs = Date.now() - fusionStart;
-      const hybridTop = hybridRanked.slice(0, 20);
+      const hybridPool = hybridRanked.slice(0, CANDIDATE_CAP).flatMap((id) => {
+        const card = cardById.get(id);
+        return card ? [card] : [];
+      });
+      const rerankRubric = buildRerankRubric(query.id);
+      const jevRerankStarted = Date.now();
+      const jevEvaluations = await parallelMap(hybridPool, 12, (card) => evaluateRubricForCandidate({
+        constituentId: card.constituentId,
+        fields: { ...card.fields },
+        evidenceRefs: card.evidenceRefs,
+        rubric: rerankRubric,
+        asOf: AS_OF,
+        datasetVersion: DATASET_VERSION,
+        evidenceVersion: EVIDENCE_VERSION,
+        client: jevClient,
+        cache: jevCache,
+      }), (completed) => console.log(JSON.stringify({ phase: "jev_rerank_progress", query: query.id,
+        completed, total: hybridPool.length })));
+      const jevRerankMs = Date.now() - jevRerankStarted;
+      const poolPosition = new Map(hybridPool.map((card, index) => [card.constituentId, index]));
+      const jevRerankedPool = [...jevEvaluations].sort((a, b) => {
+        const as = a.rubricScore ?? Number.NEGATIVE_INFINITY;
+        const bs = b.rubricScore ?? Number.NEGATIVE_INFINITY;
+        return bs - as || (poolPosition.get(a.constituentId) ?? 0) - (poolPosition.get(b.constituentId) ?? 0);
+      }).map((row) => row.constituentId);
+      const jevPoolSet = new Set(jevRerankedPool);
+      const jevRanked = [...jevRerankedPool, ...hybridRanked.filter((id) => !jevPoolSet.has(id))];
+      const jevTop = jevRanked.slice(0, 20);
+      const jevRerankTelemetry = summarizeJevRerank(jevEvaluations);
 
-      const jevCandidates = hybridTop.map((id, index) => ({
+      const jevCandidates = jevTop.map((id, index) => ({
         constituentId: id, rank: index + 1, disposition: "eligible" as const,
         fields: { ...(cardById.get(id)!.fields) }, evidenceRefs: cardById.get(id)!.evidenceRefs,
         eligibleForContact: contactAllowed.get(id) ?? false,
@@ -282,7 +366,7 @@ async function main(): Promise<void> {
       })), goldActions);
 
       const llmRubric = actionRubrics.get(query.id)!.rubric;
-      const llmRaw = await parallelMap(hybridTop, 8, async (id) => evaluateLlmRubricCandidate({
+      const llmRaw = await parallelMap(jevTop, 8, async (id) => evaluateLlmRubricCandidate({
         candidate: { candidateId: id, fields: { ...(cardById.get(id)!.fields) } },
         rubric: llmRubric,
         asOf: AS_OF,
@@ -290,7 +374,7 @@ async function main(): Promise<void> {
           actionCriterionId: "final_action" },
       }));
       const llmActions = llmRaw.map((row, index) => {
-        const id = hybridTop[index]!;
+        const id = jevTop[index]!;
         const requested = row.action;
         const allowed = requested !== null && (requested !== "ask" || (solicitAllowed.get(id) ?? false));
         const fallback = ACTIONS.find((action) => action !== "ask" || (solicitAllowed.get(id) ?? false)) ?? null;
@@ -307,17 +391,19 @@ async function main(): Promise<void> {
           semanticOnly: { metrics: metrics(semanticRanked, grades), latencyMs: semanticMs },
           semanticPlusBm25: { metrics: metrics(hybridRanked, grades), latencyMs: bm25Ms + hybridMs,
             retrievedCandidateCount: Math.min(CANDIDATE_CAP, eligibleIds.length) },
+          semanticPlusBm25Jev: { metrics: metrics(jevRanked, grades), latencyMs: jevRerankMs,
+            rerankedCandidateCount: jevEvaluations.length, telemetry: jevRerankTelemetry },
         },
         finalTopTwentyActions: {
           jev: { quality: jevActionQuality, telemetry: summarizeJev(jevActions) },
           llm: { quality: llmActionQuality, telemetry: summaryLlm(llmRaw) },
         },
-        semanticRetrievalLatencyMs: semanticMs,
       });
       console.log(JSON.stringify({ phase: "query_complete", query: query.id,
         semanticHitsAt20: (results.at(-1) as { rankings: { semanticOnly: { metrics: Metrics } } }).rankings.semanticOnly.metrics.hitsAt20,
         hybridHitsAt20: (results.at(-1) as { rankings: { semanticPlusBm25: { metrics: Metrics } } }).rankings.semanticPlusBm25.metrics.hitsAt20,
-        jevCalls: jevActions.length, llmCalls: llmRaw.length }));
+        jevRerankedHitsAt20: (results.at(-1) as { rankings: { semanticPlusBm25Jev: { metrics: Metrics } } }).rankings.semanticPlusBm25Jev.metrics.hitsAt20,
+        jevScored: jevEvaluations.length, jevActionCalls: jevActions.length, llmActionCalls: llmRaw.length }));
     }
 
     const vectorCacheSize = vectorCache.size;
@@ -331,11 +417,13 @@ async function main(): Promise<void> {
       population: { eligibility: "checkEligibility eligibleForContact as of cutoff", eligibleN: eligibleIds.length,
         totalConstituentRows: constituents.length },
       retrieval: { semantic: "full-population cosine ranking over cached text-embedding-3-small vectors",
-      hybrid: "full-population BM25 and embedding rank lists fused with RRF k=60; top-2,000 candidate pool",
+        hybrid: "full-population BM25 and embedding rank lists fuse with RRF k=60 to filter a top-2,000 candidate pool; Jev independently scores and reranks every candidate in that pool using only raw scoped card fields",
         candidatePoolSize: Math.min(CANDIDATE_CAP, eligibleIds.length), vectorCacheSize,
         embedding: { ...vectors.status, usage: embeddingTelemetry } },
-      finalDecision: { jev: "Jev receives only allowlisted as-of-safe raw field values for the hybrid top 20 per query; never embeddings or retrieval scores",
-        llm: "OpenAI receives the same top-20 raw field values and a separate final action choice; ask is overridden when solicitation is disallowed",
+      reranking: { candidateCap: CANDIDATE_CAP, scoreCriterion: "one query-specific ordinal priority score per candidate, 4 levels; scores only determine ordering inside the filtered pool; hybrid order breaks ties",
+        jevReceivesEmbeddingsOrRetrievalScores: false },
+      finalDecision: { jev: "Jev receives only allowlisted as-of-safe raw field values for the Jev-reranked top 20; never embeddings or retrieval scores",
+        llm: "OpenAI receives the same Jev-reranked top-20 raw field values and a separate final action choice; ask is overridden when solicitation is disallowed",
         actions: ACTIONS, evaluation: "exact action agreement only where the frozen gold label maps to one of the four supported actions; unsupported hold/exclude labels are unscored" },
       metrics: { gradedNdcgGain: "2^relevance-1", relevant: "grade > 0", ties: "constituent ID ascending", cutoffs: [100, 500, 2_000] },
       queries: results,
@@ -350,9 +438,9 @@ async function main(): Promise<void> {
     const lines = [
       "# Full-Corpus Live Fundraising Benchmark", "",
       `Frozen query set: [complex-benchmark-gold-v1.json](complex-benchmark-gold-v1.json). Cutoff ${AS_OF}; eligible population ${eligibleIds.length.toLocaleString()}.`,
-      "Semantic-only and semantic+BM25 rankings cover the full population. Jev and OpenAI each make a final action choice for the exact same hybrid top 20 per query; only as-of-safe raw field values are sent, never embeddings or retrieval scores.",
+      "Semantic-only ranks the full population. Semantic+BM25 filters a shared top-2,000 pool; Jev scores and reranks every candidate using scoped raw fields, then Jev and OpenAI make final action choices for the Jev top 20. No model receives embeddings or retrieval scores.",
       "",
-      "| Query | Ranker | Relevant / N | Recall@100 | Recall@500 | Recall@2k | NDCG@10 | NDCG@20 | P@20 | Hits@20 | Retrieval ms |",
+      "| Query | Ranker | Relevant / N | Recall@100 | Recall@500 | Recall@2k | NDCG@10 | NDCG@20 | P@20 | Hits@20 | Rank ms |",
       "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ];
     for (const result of results as { id: string; rankings: { semanticOnly: { metrics: Metrics; latencyMs: number }; semanticPlusBm25: { metrics: Metrics; latencyMs: number } } }[]) {

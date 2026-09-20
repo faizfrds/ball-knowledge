@@ -51,7 +51,11 @@ export interface FinalDecisionQuestion {
 }
 
 /** Build the final Choice rubric. Its only labels are the four supported actions. */
-export function buildFinalDecisionQuestion(fields: PipelineField[], question = "Which single outreach action is appropriate?"): FinalDecisionQuestion {
+export function buildFinalDecisionQuestion(
+  fields: PipelineField[],
+  question = "Which single outreach action is appropriate?",
+  options: Record<FinalAction, string> = FINAL_ACTION_DESCRIPTIONS,
+): FinalDecisionQuestion {
   if (fields.length === 0) throw new Error("Final decision needs at least one scoped field");
   const allowlist = new Set<string>(PIPELINE_FIELDS);
   for (const field of fields) if (!allowlist.has(field)) throw new Error(`Unsupported final-decision field: ${String(field)}`);
@@ -62,7 +66,7 @@ export function buildFinalDecisionQuestion(fields: PipelineField[], question = "
       gates: [],
       scores: [],
       bonuses: [],
-      tags: [{ id: "final_action", question, options: { ...FINAL_ACTION_DESCRIPTIONS }, fields: [...fields] }],
+      tags: [{ id: "final_action", question, options: { ...options }, fields: [...fields] }],
     },
     criterionFields: [...fields],
   };
@@ -80,9 +84,10 @@ export async function evaluateFinalTopTwentyActions(args: {
   cache?: QuestionAnswerCache;
   limit?: number;
   question?: string;
+  actionOptions?: Record<FinalAction, string>;
 }): Promise<FinalActionDecision[]> {
   const limit = Math.max(0, Math.min(20, Math.floor(args.limit ?? 20)));
-  const question = buildFinalDecisionQuestion(args.fields, args.question);
+  const question = buildFinalDecisionQuestion(args.fields, args.question, args.actionOptions);
   const selected = [...args.rankedCandidates]
     .filter((candidate) => candidate.disposition === "eligible")
     .sort((a, b) => a.rank - b.rank || a.constituentId - b.constituentId)

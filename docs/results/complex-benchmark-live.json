@@ -1,0 +1,554 @@
+{
+  "protocol": "givecampus-complex-live-v1",
+  "goldProtocol": "givecampus-complex-offline-v1",
+  "goldSpecSha256": "609c2df08875edfef7e5c85d22a2c9a42501f916ae53cd77cf22e8c26bd64e44",
+  "asOf": "2025-08-31",
+  "datasetVersion": "1.2",
+  "evidenceVersion": "ev-001",
+  "population": {
+    "eligibility": "checkEligibility eligibleForContact as of cutoff",
+    "eligibleN": 14052,
+    "totalConstituentRows": 20000
+  },
+  "retrieval": {
+    "semantic": "full-population cosine ranking over cached text-embedding-3-small vectors",
+    "hybrid": "full-population BM25 and embedding rank lists fused with RRF k=60; top-2,000 candidate pool",
+    "candidatePoolSize": 2000,
+    "vectorCacheSize": 14056,
+    "embedding": {
+      "available": true,
+      "cachePath": "data\\retrieval-cache.sqlite",
+      "model": "text-embedding-3-small",
+      "missingCardVectors": 0,
+      "missingQueryVectors": 0,
+      "reason": null
+    }
+  },
+  "finalDecision": {
+    "jev": "Jev receives only allowlisted as-of-safe raw field values for the hybrid top 20 per query; never embeddings or retrieval scores",
+    "llm": "OpenAI receives the same top-20 raw field values and a separate final action choice; ask is overridden when solicitation is disallowed",
+    "actions": [
+      "thank_you",
+      "event_invite",
+      "reunion_mailer",
+      "ask"
+    ],
+    "evaluation": "exact action agreement only where the frozen gold label maps to one of the four supported actions; unsupported hold/exclude labels are unscored"
+  },
+  "metrics": {
+    "gradedNdcgGain": "2^relevance-1",
+    "relevant": "grade > 0",
+    "ties": "constituent ID ascending",
+    "cutoffs": [
+      100,
+      500,
+      2000
+    ]
+  },
+  "queries": [
+    {
+      "id": "q1_lapsed_loyal_engaged",
+      "gradeCounts": [
+        10249,
+        3508,
+        260,
+        35
+      ],
+      "goldActionCounts": {
+        "broad_invite": 3768,
+        "exclude": 10097,
+        "hold_for_review": 152,
+        "personal_outreach": 35
+      },
+      "rankings": {
+        "semanticOnly": {
+          "metrics": {
+            "recallAt100": 0.015777,
+            "recallAt500": 0.066001,
+            "recallAt2000": 0.237444,
+            "ndcgAt10": 0.175176,
+            "ndcgAt20": 0.178296,
+            "precisionAt20": 0.6,
+            "recallAt20": 0.003155,
+            "mrr": 1,
+            "hitsAt20": 12,
+            "relevantN": 3803
+          },
+          "latencyMs": 93
+        },
+        "semanticPlusBm25": {
+          "metrics": {
+            "recallAt100": 0.015514,
+            "recallAt500": 0.078622,
+            "recallAt2000": 0.282409,
+            "ndcgAt10": 0.046409,
+            "ndcgAt20": 0.104228,
+            "precisionAt20": 0.45,
+            "recallAt20": 0.002367,
+            "mrr": 0.2,
+            "hitsAt20": 9,
+            "relevantN": 3803
+          },
+          "latencyMs": 430,
+          "retrievedCandidateCount": 2000
+        }
+      },
+      "finalTopTwentyActions": {
+        "jev": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 9,
+            "exactActionAccuracy": 0.888889,
+            "correctN": 8,
+            "modelActionCounts": {
+              "thank_you": 1,
+              "event_invite": 9,
+              "reunion_mailer": 0,
+              "ask": 10
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "jev-1.13.0",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "errorsOrUnknown": 0,
+            "resolvedModelCounts": {
+              "jev-1.13.0": 20
+            },
+            "inputTokens": 11947,
+            "outputTokens": 1139,
+            "latencyMs": {
+              "p50": 186,
+              "p95": 541
+            },
+            "finalActions": {
+              "thank_you": 1,
+              "event_invite": 9,
+              "reunion_mailer": 0,
+              "ask": 10
+            }
+          }
+        },
+        "llm": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 9,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 18,
+              "event_invite": 0,
+              "reunion_mailer": 0,
+              "ask": 2
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "gpt-4.1-mini",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "unknownActions": 18,
+            "resolvedModelCounts": {
+              "gpt-4.1-mini-2025-04-14": 20
+            },
+            "inputTokens": 7627,
+            "outputTokens": 244,
+            "latencyMs": {
+              "p50": 744,
+              "p95": 1592
+            },
+            "finalActions": {
+              "thank_you": 0,
+              "event_invite": 0,
+              "reunion_mailer": 0,
+              "ask": 2
+            }
+          }
+        }
+      },
+      "semanticRetrievalLatencyMs": 93
+    },
+    {
+      "id": "q2_stewardship_before_ask",
+      "gradeCounts": [
+        13806,
+        106,
+        55,
+        85
+      ],
+      "goldActionCounts": {
+        "exclude": 13806,
+        "hold_for_review": 106,
+        "thank_you": 140
+      },
+      "rankings": {
+        "semanticOnly": {
+          "metrics": {
+            "recallAt100": 0.00813,
+            "recallAt500": 0.04065,
+            "recallAt2000": 0.199187,
+            "ndcgAt10": 0,
+            "ndcgAt20": 0,
+            "precisionAt20": 0,
+            "recallAt20": 0,
+            "mrr": 0.026316,
+            "hitsAt20": 0,
+            "relevantN": 246
+          },
+          "latencyMs": 90
+        },
+        "semanticPlusBm25": {
+          "metrics": {
+            "recallAt100": 0.004065,
+            "recallAt500": 0.028455,
+            "recallAt2000": 0.121951,
+            "ndcgAt10": 0,
+            "ndcgAt20": 0,
+            "precisionAt20": 0,
+            "recallAt20": 0,
+            "mrr": 0.013514,
+            "hitsAt20": 0,
+            "relevantN": 246
+          },
+          "latencyMs": 391,
+          "retrievedCandidateCount": 2000
+        }
+      },
+      "finalTopTwentyActions": {
+        "jev": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 0,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 10,
+              "event_invite": 10,
+              "reunion_mailer": 0,
+              "ask": 0
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "jev-1.13.0",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "errorsOrUnknown": 0,
+            "resolvedModelCounts": {
+              "jev-1.13.0": 20
+            },
+            "inputTokens": 11782,
+            "outputTokens": 1150,
+            "latencyMs": {
+              "p50": 180,
+              "p95": 247
+            },
+            "finalActions": {
+              "thank_you": 10,
+              "event_invite": 10,
+              "reunion_mailer": 0,
+              "ask": 0
+            }
+          }
+        },
+        "llm": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 0,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 18,
+              "event_invite": 2,
+              "reunion_mailer": 0,
+              "ask": 0
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "gpt-4.1-mini",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "unknownActions": 18,
+            "resolvedModelCounts": {
+              "gpt-4.1-mini-2025-04-14": 20
+            },
+            "inputTokens": 7474,
+            "outputTokens": 256,
+            "latencyMs": {
+              "p50": 783,
+              "p95": 1725
+            },
+            "finalActions": {
+              "thank_you": 0,
+              "event_invite": 2,
+              "reunion_mailer": 0,
+              "ask": 0
+            }
+          }
+        }
+      },
+      "semanticRetrievalLatencyMs": 90
+    },
+    {
+      "id": "q3_reunion_reengagement",
+      "gradeCounts": [
+        10043,
+        4009,
+        0,
+        0
+      ],
+      "goldActionCounts": {
+        "event_invite": 4009,
+        "exclude": 10043
+      },
+      "rankings": {
+        "semanticOnly": {
+          "metrics": {
+            "recallAt100": 0.019207,
+            "recallAt500": 0.085807,
+            "recallAt2000": 0.340484,
+            "ndcgAt10": 0.930569,
+            "ndcgAt20": 0.918835,
+            "precisionAt20": 0.9,
+            "recallAt20": 0.00449,
+            "mrr": 1,
+            "hitsAt20": 18,
+            "relevantN": 4009
+          },
+          "latencyMs": 96
+        },
+        "semanticPlusBm25": {
+          "metrics": {
+            "recallAt100": 0.019706,
+            "recallAt500": 0.078074,
+            "recallAt2000": 0.275131,
+            "ndcgAt10": 0.930569,
+            "ndcgAt20": 0.882057,
+            "precisionAt20": 0.85,
+            "recallAt20": 0.00424,
+            "mrr": 1,
+            "hitsAt20": 17,
+            "relevantN": 4009
+          },
+          "latencyMs": 370,
+          "retrievedCandidateCount": 2000
+        }
+      },
+      "finalTopTwentyActions": {
+        "jev": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 17,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 0,
+              "event_invite": 0,
+              "reunion_mailer": 20,
+              "ask": 0
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "jev-1.13.0",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "errorsOrUnknown": 0,
+            "resolvedModelCounts": {
+              "jev-1.13.0": 20
+            },
+            "inputTokens": 11055,
+            "outputTokens": 1220,
+            "latencyMs": {
+              "p50": 189,
+              "p95": 256
+            },
+            "finalActions": {
+              "thank_you": 0,
+              "event_invite": 0,
+              "reunion_mailer": 20,
+              "ask": 0
+            }
+          }
+        },
+        "llm": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 17,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 19,
+              "event_invite": 0,
+              "reunion_mailer": 1,
+              "ask": 0
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "gpt-4.1-mini",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "unknownActions": 19,
+            "resolvedModelCounts": {
+              "gpt-4.1-mini-2025-04-14": 20
+            },
+            "inputTokens": 7039,
+            "outputTokens": 281,
+            "latencyMs": {
+              "p50": 831,
+              "p95": 1571
+            },
+            "finalActions": {
+              "thank_you": 0,
+              "event_invite": 0,
+              "reunion_mailer": 1,
+              "ask": 0
+            }
+          }
+        }
+      },
+      "semanticRetrievalLatencyMs": 96
+    },
+    {
+      "id": "q4_upgrade_ask_review",
+      "gradeCounts": [
+        13073,
+        898,
+        63,
+        18
+      ],
+      "goldActionCounts": {
+        "ask": 18,
+        "event_invite": 898,
+        "exclude": 13073,
+        "hold_for_review": 63
+      },
+      "rankings": {
+        "semanticOnly": {
+          "metrics": {
+            "recallAt100": 0.030644,
+            "recallAt500": 0.104188,
+            "recallAt2000": 0.284985,
+            "ndcgAt10": 0.167906,
+            "ndcgAt20": 0.160554,
+            "precisionAt20": 0.5,
+            "recallAt20": 0.010215,
+            "mrr": 0.5,
+            "hitsAt20": 10,
+            "relevantN": 979
+          },
+          "latencyMs": 95
+        },
+        "semanticPlusBm25": {
+          "metrics": {
+            "recallAt100": 0.048008,
+            "recallAt500": 0.091931,
+            "recallAt2000": 0.259448,
+            "ndcgAt10": 0.255918,
+            "ndcgAt20": 0.236963,
+            "precisionAt20": 0.85,
+            "recallAt20": 0.017365,
+            "mrr": 1,
+            "hitsAt20": 17,
+            "relevantN": 979
+          },
+          "latencyMs": 389,
+          "retrievedCandidateCount": 2000
+        }
+      },
+      "finalTopTwentyActions": {
+        "jev": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 11,
+            "exactActionAccuracy": 0.363636,
+            "correctN": 4,
+            "modelActionCounts": {
+              "thank_you": 3,
+              "event_invite": 7,
+              "reunion_mailer": 0,
+              "ask": 10
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "jev-1.13.0",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "errorsOrUnknown": 0,
+            "resolvedModelCounts": {
+              "jev-1.13.0": 20
+            },
+            "inputTokens": 11364,
+            "outputTokens": 1137,
+            "latencyMs": {
+              "p50": 177,
+              "p95": 261
+            },
+            "finalActions": {
+              "thank_you": 3,
+              "event_invite": 7,
+              "reunion_mailer": 0,
+              "ask": 10
+            }
+          }
+        },
+        "llm": {
+          "quality": {
+            "topTwentyN": 20,
+            "goldActionScoredN": 11,
+            "exactActionAccuracy": 0,
+            "correctN": 0,
+            "modelActionCounts": {
+              "thank_you": 20,
+              "event_invite": 0,
+              "reunion_mailer": 0,
+              "ask": 0
+            },
+            "permissionOverrides": 0
+          },
+          "telemetry": {
+            "requestedModel": "gpt-4.1-mini",
+            "evaluatedN": 20,
+            "liveCalls": 20,
+            "cacheHits": 0,
+            "unknownActions": 20,
+            "resolvedModelCounts": {
+              "gpt-4.1-mini-2025-04-14": 20
+            },
+            "inputTokens": 7396,
+            "outputTokens": 230,
+            "latencyMs": {
+              "p50": 744,
+              "p95": 1862
+            },
+            "finalActions": {
+              "thank_you": 0,
+              "event_invite": 0,
+              "reunion_mailer": 0,
+              "ask": 0
+            }
+          }
+        }
+      },
+      "semanticRetrievalLatencyMs": 95
+    }
+  ],
+  "totalRuntimeMs": 47088,
+  "outputsContainConstituentIds": false,
+  "rowLevelModelAnswersPersisted": false,
+  "futureOutcomeLabelsLoaded": false,
+  "limitations": [
+    "Q3 grade-2 branch in the frozen gold implementation is unreachable; see frozen spec and source label rules."
+  ]
+}

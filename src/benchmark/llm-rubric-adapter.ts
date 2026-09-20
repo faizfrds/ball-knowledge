@@ -346,7 +346,7 @@ export async function evaluateLlmRubricCandidate(args: {
       body: JSON.stringify({
         model,
         input: [
-          { role: "system", content: [{ type: "input_text", text: "Evaluate each fundraising rubric question independently using only the raw state included with that question. Do not infer unlisted evidence. Return one JSON object with an answers object keyed by question id. For noul answers return a confidence from 0 to 1, for score answers return an integer index into the ordered levels, and for choice answers return an exact option key." }] },
+          { role: "system", content: [{ type: "input_text", text: "Evaluate each fundraising rubric question independently using only the raw state included with that question. Do not infer unlisted evidence. Return one JSON object with an answers object keyed by question id. For noul answers return a confidence from 0 to 1, for score answers return an integer index into the ordered levels, and for choice answers return exactly one supplied option key. Never invent a label or abstain; if evidence is incomplete, choose the safest supported option from the supplied keys." }] },
           { role: "user", content: [{ type: "input_text", text: JSON.stringify(payloadForModel) }] },
         ],
         text: { format: { type: "json_object" } },

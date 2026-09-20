@@ -8,7 +8,9 @@ import {
   precomputeCharacteristics,
   SqliteCharacteristicCache,
   type PrecomputeResult,
+  type Verdict,
 } from "../src/characteristics/precompute.js";
+import { buildJevStateForId } from "../src/benchmark/jev-live.js";
 import type { JevAnswer, JevClient, JevQuestion, JevState } from "../src/givecampus/jev.js";
 import { JEV_MODEL } from "../src/givecampus/jev.js";
 
@@ -172,12 +174,37 @@ describe("precomputeCharacteristics", () => {
     }
   });
 
-  it("mock client mirrors the code evaluation deterministically", async () => {
-    const result = await runWith(new LocalCharacteristicClient(), new MapCharacteristicCache());
-    expect(result.verdictsByConstituent.get(1)!.lapsed_over_730d).toBe("yes");
-    expect(result.verdictsByConstituent.get(2)!.lapsed_over_730d).toBe("no");
-    expect(result.verdictsByConstituent.get(2)!.lifetime_at_least_1000).toBe("yes");
-    expect(result.fallbackUsed).toBe(false);
+  it("mock client mirrors the code evaluation deterministically (parity)", async () => {
+    const db = testDb(4);
+    try {
+      const result = await precomputeCharacteristics({
+        db,
+        poolIds: [1, 2],
+        asOf: AS_OF,
+        client: new LocalCharacteristicClient(),
+        cache: new MapCharacteristicCache(),
+        chunkSize: 30,
+        maxLiveCalls: 1000,
+      });
+      const mockClientMirror = (id: number): Record<string, boolean | null> => {
+        const state = buildJevStateForId(db, id, AS_OF);
+        return Object.fromEntries(
+          buildCharacteristicQuestions().map((q) => [q.id, q.codeCheck(state)]),
+        );
+      };
+      for (const id of [1, 2]) {
+        const mirror = mockClientMirror(id);
+        const got: Record<string, Verdict> = result.verdictsByConstituent.get(id)!;
+        for (const [qid, codeValue] of Object.entries(mirror)) {
+          expect(got[qid]).toBe(codeValue == null ? "uncertain" : codeValue ? "yes" : "no");
+        }
+      }
+      expect(result.verdictsByConstituent.get(2)!.lifetime_at_least_1000).toBe("yes");
+      expect(result.verdictsByConstituent.get(1)!.gifts_24mo_at_least_1).toBe("no");
+      expect(result.fallbackUsed).toBe(false);
+    } finally {
+      db.close();
+    }
   });
 
   it("maps noul scores to verdicts with explicit thresholds", () => {

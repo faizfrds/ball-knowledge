@@ -30,7 +30,6 @@ import { getEligiblePopulation } from "../benchmark/eligibility.js";
 import {
   LocalCharacteristicClient,
   MapCharacteristicCache,
-  noulVerdict,
   precomputeCharacteristics,
   SqliteCharacteristicCache,
   type PrecomputeResult,
@@ -58,7 +57,7 @@ function percentile(sorted: number[], p: number): number {
 
 function summarizeVerdicts(result: PrecomputeResult, questionIds: string[]) {
   const counts = new Map<string, { yes: number; no: number; uncertain: number }>();
-  for (const [qid] of questionIds.map((q) => [q] as const)) counts.set(qid, { yes: 0, no: 0, uncertain: 0 });
+  for (const qid of questionIds) counts.set(qid, { yes: 0, no: 0, uncertain: 0 });
   for (const verdicts of result.verdictsByConstituent.values()) {
     for (const [qid, verdict] of Object.entries(verdicts)) {
       const entry = counts.get(qid) ?? { yes: 0, no: 0, uncertain: 0 };
@@ -110,9 +109,6 @@ async function main() {
     const questionIds = buildCharacteristicQuestions().map((q) => q.id);
     const counts = summarizeVerdicts(result, questionIds);
     const uncached = result.records.filter((r) => !r.cacheHit && !r.error).map((r) => r.latencyMs).sort((a, b) => a - b);
-    const yesCount = (v: Verdict) => v === "yes";
-    void yesCount;
-    void noulVerdict;
     // Enumerate the simulated request log (one row per characteristic).
     const requestLog = [] as string[];
     const perQuestionYesRate: { id: string; yesPct: number }[] = [];

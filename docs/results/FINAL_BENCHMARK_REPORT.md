@@ -81,9 +81,9 @@ The measured known OpenAI portion was approximately **$0.047**:
 | GPT-5.6 Luna rubric planning, including schema-repair attempts | 6,622 input + 17,598 output | $0.0224 |
 | GPT-5 mini top-20 comparison decisions | 29,729 input + 999 output | $0.0094 |
 
-The live Jev rubric run generated 14.61 million input tokens and 1.06 million output tokens across 43,132 calls. At Jev's standard **$0.42 per million input tokens with free output**, the complete Jev reranking and final-action run cost approximately **$6.14**. Reranking alone cost approximately **$6.13**.
+The live Jev rubric run generated 14.61 million input tokens and 1.06 million output tokens across 43,132 calls. At Jev's standard **$42 per billion input tokens**, equivalent to **$0.042 per million**, with free output, the complete Jev reranking and final-action run cost approximately **$0.614**. Reranking alone cost approximately **$0.613**.
 
-Including embeddings, Luna planning, GPT-5 mini comparison decisions, and Jev, the measured model cost was therefore approximately **$6.18**. This excludes any platform subscription or fixed infrastructure charges.
+Including embeddings, Luna planning, GPT-5 mini comparison decisions, and Jev, the measured model cost was therefore approximately **$0.66**. This excludes any platform subscription or fixed infrastructure charges.
 
 ### Claude Opus 5 projection
 
@@ -114,7 +114,7 @@ The production default now passes the hybrid top 200 to Jev instead of the top 2
 | Warm end-to-end query, including final top-20 actions | ~20–25 seconds |
 | Cold query including Luna rubric planning | ~45–85 seconds |
 | Jev input, including the final-action pass | ~0.37M tokens |
-| Jev cost at $0.42/M input and free output | **~$0.16** |
-| Total known model cost | **~$0.16–$0.17** |
+| Jev cost at $42/B input and free output | **~$0.016** |
+| Total known production model cost | **~$0.02–$0.03** |
 
 The one-time corpus embedding cost remains approximately $0.015 with `text-embedding-3-small` or $0.096 with `text-embedding-3-large`. New query embeddings cost a fraction of a cent. The main unresolved tradeoff is candidate recall at 200: the cost and latency projections are reliable first-order estimates, but the existing benchmark does not establish whether all important prospects survive the smaller retrieval cutoff.

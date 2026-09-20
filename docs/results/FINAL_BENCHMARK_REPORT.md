@@ -51,3 +51,52 @@ After ranking, Jev assigns each selected constituent one supported next action: 
 
 Full aggregate benchmark: [complex-benchmark-live.md](complex-benchmark-live.md)  
 Machine-readable data, including Luna's generated rubrics and telemetry: [complex-benchmark-live.json](complex-benchmark-live.json)
+
+## Latency and projected Claude Opus 5 cost
+
+### Measured latency
+
+| Stage | Four-query total | Average per query |
+|---|---:|---:|
+| Semantic ranking over cached embeddings | 0.34 s | 0.08 s |
+| Luna-phrased semantic + BM25 retrieval | 34.21 s | 8.55 s |
+| Jev rubric reranking | 307.19 s | 76.80 s |
+| Complete live runner | 374.23 s | 93.56 s |
+
+Jev reranking represented about **82%** of measured runner latency. The benchmark issued 43,132 independent Jev criterion judgments. Their aggregate service latency was 8.19 hours, compressed to 307.2 seconds of wall time through concurrent execution.
+
+On the final-action layer, Jev's measured p50 latency was 170–185 ms and p95 was 223–266 ms. The GPT-5 mini comparison was 734–805 ms p50 and 1.07–1.82 seconds p95. Jev was therefore approximately **4.2x faster at the median** and **4–8x faster at p95** for these short structured decisions.
+
+The 374.2-second runner reused the four Luna-generated rubric plans. A cold run should add roughly the slowest parallel planner call, about 61 seconds, producing an estimated cold end-to-end time of **about 7.3 minutes**.
+
+### Known OpenAI cost
+
+The measured known OpenAI portion was approximately **$0.047**:
+
+| Component | Measured usage | Estimated cost |
+|---|---:|---:|
+| Constituent and query embeddings | 735,279 input tokens | $0.0147 |
+| GPT-5.6 Luna rubric planning, including schema-repair attempts | 6,622 input + 17,598 output | $0.0224 |
+| GPT-5 mini top-20 comparison decisions | 29,729 input + 999 output | $0.0094 |
+
+The live Jev rubric run generated 14.61 million input tokens and 1.06 million output tokens across 43,132 calls. At Jev's standard **$0.42 per million input tokens with free output**, the complete Jev reranking and final-action run cost approximately **$6.14**. Reranking alone cost approximately **$6.13**.
+
+Including embeddings, Luna planning, GPT-5 mini comparison decisions, and Jev, the measured model cost was therefore approximately **$6.18**. This excludes any platform subscription or fixed infrastructure charges.
+
+### Claude Opus 5 projection
+
+Claude Opus 5 standard synchronous pricing is $5 per million uncached input tokens and $25 per million output tokens. Adaptive thinking is enabled by default, so reasoning tokens are the main cost driver even when the visible JSON response is small.
+
+An efficient LLM implementation would evaluate all of one constituent's rubric criteria in one request, resulting in 8,000 calls for four queries and 2,000 candidates per query. With little or no caching:
+
+| Scenario | Input per candidate | Reasoning + visible output per candidate | Projected total |
+|---|---:|---:|---:|
+| Constrained reasoning | 1,000 tokens | 500 + 50 tokens | **$150** |
+| High reasoning | 2,000 tokens | 1,500 + 50 tokens | **$390** |
+| Very high reasoning | 3,000 tokens | 3,000 + 50 tokens | **$730** |
+
+The **$390 high-reasoning estimate** is the most appropriate planning figure for an uncached Opus 5 reranker here. It consists of about $80 of input and $310 of reasoning/output tokens.
+
+If Opus mirrored Jev's criterion-by-criterion architecture instead of combining each person's criteria into one request, it would make roughly 43,132 calls. Using the measured 14.61 million input tokens and assuming 1,000 reasoning tokens per judgment, the projected cost rises to approximately **$1,178**. At 2,000 reasoning tokens per judgment it rises to approximately **$2,256**. With no reasoning overhead and exactly the measured Jev token volume, the Opus-equivalent floor would still be about **$99.54**.
+
+Claude Opus 5 Fast mode is advertised as roughly 2.5 times faster at twice the base price. The efficient high-reasoning projection would therefore be approximately **$780** in Fast mode. Actual wall time would depend on account rate limits and allowed concurrency; the benchmark does not contain a live Opus 5 latency measurement, so no measured latency-win claim should be made against Opus itself.

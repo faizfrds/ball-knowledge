@@ -1,0 +1,450 @@
+{
+  "kind": "jev-live-reranker-pool",
+  "scopeWarning": "RERANKER-POOL evaluation on a fixed candidate pool (<=150). NOT a full-population result; do not compare numerically with docs/BENCHMARK.md leaderboard.",
+  "pool": {
+    "t0": "2025-08-31",
+    "trainT0": "2023-08-31",
+    "perRanker": 10,
+    "cap": 30,
+    "sources": {
+      "trained_lr_lr_f": [
+        9314,
+        19508,
+        565,
+        2036,
+        9369,
+        18112,
+        4399,
+        18481,
+        12758,
+        4301
+      ],
+      "rfm_r_heavy": [
+        2678,
+        18134,
+        8662,
+        15895,
+        4301,
+        19939,
+        12658,
+        18327,
+        565,
+        3791
+      ],
+      "priority_recency_heavy": [
+        2678,
+        4301,
+        18134,
+        19939,
+        8662,
+        12658,
+        15895,
+        17931,
+        18327,
+        3791
+      ]
+    },
+    "sourceRankers": [
+      "trained_lr_lr_f (DEV-selected LR)",
+      "rfm_r_heavy (DEV-best RFM)",
+      "priority_recency_heavy (DEV-selected priority)"
+    ],
+    "poolIds": [
+      565,
+      2036,
+      2678,
+      3791,
+      4301,
+      4399,
+      8662,
+      9314,
+      9369,
+      12658,
+      12758,
+      15895,
+      17931,
+      18112,
+      18134,
+      18327,
+      18481,
+      19508,
+      19939
+    ],
+    "poolN": 19,
+    "poolDonors": 2,
+    "windowDays": 90,
+    "outcome": "paid gifts (status='paid', gift_type != 'recurring_parent') with gift_date in (T0, T0+90d]"
+  },
+  "jev": {
+    "questions": "headline-6 (contract) + generic-3 ablation",
+    "genericQuestionsHash": "64fdeac28e198540",
+    "requestedModel": "jev-1.13.0",
+    "resolvedModel": "jev-1.13.0",
+    "modelCounts": {
+      "jev-1.13.0": 19
+    },
+    "fallbackUsed": false,
+    "headline": {
+      "n": 19,
+      "ok": 19,
+      "errors": 0,
+      "cacheHits": 0,
+      "liveCalls": 19,
+      "inputTokens": 21685,
+      "outputTokens": 3034,
+      "costInputUsd": 0.000911,
+      "latencyUncachedMs": {
+        "p50": 193,
+        "p95": 559,
+        "n": 19
+      },
+      "resolvedModel": "jev-1.13.0",
+      "modelCounts": {
+        "jev-1.13.0": 19
+      },
+      "finalActions": {
+        "stewardship_thank_you": 16,
+        "personal_outreach": 3
+      },
+      "gateOverrides": 0,
+      "priceUsdPerMInput": 0.042,
+      "outputFree": true
+    },
+    "ablation": {
+      "omitted": "disabled via --ablation 0"
+    },
+    "errors": []
+  },
+  "results": [
+    {
+      "rankerId": "trained_lr_lr_e",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 1,
+      "ndcgAt100": 1,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 9
+    },
+    {
+      "rankerId": "trained_lr_lr_f",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.6934,
+      "ndcgAt100": 0.6934,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 8
+    },
+    {
+      "rankerId": "trained_lr_lr_d",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3978,
+      "ndcgAt100": 0.3978,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 8
+    },
+    {
+      "rankerId": "trained_lr_lr_c",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.389,
+      "ndcgAt100": 0.389,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 8
+    },
+    {
+      "rankerId": "rfm_fm_only",
+      "family": "rfm_weighted",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.378,
+      "ndcgAt100": 0.378,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 4
+    },
+    {
+      "rankerId": "rfm_m_heavy",
+      "family": "rfm_weighted",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3701,
+      "ndcgAt100": 0.3701,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 5
+    },
+    {
+      "rankerId": "rfm_equal",
+      "family": "rfm_weighted",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3577,
+      "ndcgAt100": 0.3577,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 7
+    },
+    {
+      "rankerId": "rfm_f_heavy",
+      "family": "rfm_weighted",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3577,
+      "ndcgAt100": 0.3577,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 5
+    },
+    {
+      "rankerId": "jev_headline_rerank",
+      "family": "jev_live",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3503,
+      "ndcgAt100": 0.3503,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 0
+    },
+    {
+      "rankerId": "rfm_r_heavy",
+      "family": "rfm_weighted",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3346,
+      "ndcgAt100": 0.3346,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 5
+    },
+    {
+      "rankerId": "priority_base",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3321,
+      "ndcgAt100": 0.3321,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 6
+    },
+    {
+      "rankerId": "priority_no_capacity",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3321,
+      "ndcgAt100": 0.3321,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 6
+    },
+    {
+      "rankerId": "priority_recency_heavy",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 7
+    },
+    {
+      "rankerId": "priority_whynow_heavy",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 7
+    },
+    {
+      "rankerId": "rfm_lexicographic",
+      "family": "rfm_lex",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 9
+    },
+    {
+      "rankerId": "seeded_random",
+      "family": "random",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 12
+    },
+    {
+      "rankerId": "trained_lr_lr_a",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 8
+    },
+    {
+      "rankerId": "trained_lr_lr_b",
+      "family": "trained",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.328,
+      "ndcgAt100": 0.328,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 7
+    },
+    {
+      "rankerId": "gift_recency_only",
+      "family": "recency",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3243,
+      "ndcgAt100": 0.3243,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 6
+    },
+    {
+      "rankerId": "priority_engagement_heavy",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.3081,
+      "ndcgAt100": 0.3081,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 6
+    },
+    {
+      "rankerId": "priority_monetary_heavy",
+      "family": "priority_index",
+      "pAt20": 0.1053,
+      "pAt100": 0.1053,
+      "ndcgAt20": 0.2943,
+      "ndcgAt100": 0.2943,
+      "hitsAt20": 2,
+      "hitsAt100": 2,
+      "amountTop100": 575,
+      "runtimeMs": 9
+    }
+  ],
+  "perIdScores": [
+    {
+      "id": 565,
+      "jev_headline": 0.556
+    },
+    {
+      "id": 2036,
+      "jev_headline": 0.5805
+    },
+    {
+      "id": 2678,
+      "jev_headline": 0.6622
+    },
+    {
+      "id": 3791,
+      "jev_headline": 0.6458
+    },
+    {
+      "id": 4301,
+      "jev_headline": 0.5513
+    },
+    {
+      "id": 4399,
+      "jev_headline": 0.6508
+    },
+    {
+      "id": 8662,
+      "jev_headline": 0.3358
+    },
+    {
+      "id": 9314,
+      "jev_headline": 0.636
+    },
+    {
+      "id": 9369,
+      "jev_headline": 0.5303
+    },
+    {
+      "id": 12658,
+      "jev_headline": 0.7718
+    },
+    {
+      "id": 12758,
+      "jev_headline": 0.5385
+    },
+    {
+      "id": 15895,
+      "jev_headline": 0.528
+    },
+    {
+      "id": 17931,
+      "jev_headline": 0.5292
+    },
+    {
+      "id": 18112,
+      "jev_headline": 0.6528
+    },
+    {
+      "id": 18134,
+      "jev_headline": 0.5315
+    },
+    {
+      "id": 18327,
+      "jev_headline": 0.528
+    },
+    {
+      "id": 18481,
+      "jev_headline": 0.6925
+    },
+    {
+      "id": 19508,
+      "jev_headline": 0.5362
+    },
+    {
+      "id": 19939,
+      "jev_headline": 0.5327
+    }
+  ]
+}

@@ -31,7 +31,10 @@ class HybridIndex:
     _pos: dict[str, int] | None = None
 
     @classmethod
-    def load(cls, processed: str = "data/processed") -> "HybridIndex":
+    def load(cls, processed: str) -> "HybridIndex":
+        """`processed` is required. A default here would mean a misconfigured domain
+        quietly loads another corpus's vectors and returns confident, wrong results
+        instead of failing."""
         p = Path(processed)
         ids = json.loads((p / "embed_ids.json").read_text())
         emb = np.load(p / "embeddings.npy")
@@ -103,9 +106,8 @@ class HybridIndex:
         return ids[:top_k]
 
 
-def build_bm25(processed: str = "data/processed", db: str | None = None,
-               table: str = "works", id_col: str = "work_id",
-               index_sql: str | None = None) -> None:
+def build_bm25(processed: str, db: str, table: str, id_col: str,
+               index_sql: str) -> None:
     """Build the BM25 index over the same rows, in the same order, as the embeddings.
 
     row_id is the position in embed_ids.json, so sparse and dense rankings refer to
@@ -114,10 +116,8 @@ def build_bm25(processed: str = "data/processed", db: str | None = None,
 
     p = Path(processed)
     ids = json.loads((p / "embed_ids.json").read_text())
-    text = index_sql or "coalesce(title,'') || ' ' || coalesce(abstract,'')"
-    src = duckdb.connect(db or str(p / "ball.duckdb"), read_only=True)
-    rows = dict(src.execute(
-        f"SELECT {id_col}, {text} FROM {table}").fetchall())
+    src = duckdb.connect(db, read_only=True)
+    rows = dict(src.execute(f"SELECT {id_col}, {index_sql} FROM {table}").fetchall())
     src.close()
 
     out = p / "fts.duckdb"
@@ -134,4 +134,6 @@ def build_bm25(processed: str = "data/processed", db: str | None = None,
 
 
 if __name__ == "__main__":
-    build_bm25()
+    from .domain import get
+    d = get("works")
+    build_bm25(d.processed, d.db, d.table, d.id_col, d.index_sql)

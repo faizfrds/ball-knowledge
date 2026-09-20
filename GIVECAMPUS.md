@@ -50,12 +50,33 @@ hours a week. Giving is extremely concentrated (in this file the top tenth of do
 hold about 90% of the dollars), so the ranker now multiplies rubric fit by dollars at
 stake, taken in log space so one enormous gift cannot outrank genuine fit:
 
-```
-value = max(lifetime_giving, largest_gift × 3, recurring × 24, engagement_proxy)
-score = fit × (0.35 + 0.65 × normalised_log_value)
+```python
+value = max(
+    lifetime_giving,              # what they have actually given
+    largest_gift * 3,             # one big gift signals capacity the total hides
+    recurring_monthly * 12 * 2,   # two years at their current rate
+    engagement_proxy,             # volunteer 250 + events*60 + reunion 500
+    25.0,                         # floor: nobody is worth literally zero
+)
+norm  = (log(value) - log(min)) / (log(max) - log(min))   # across the survivors
+score = fit * (0.35 + 0.65 * norm)
 ```
 
+`max` rather than a sum, because these are alternative readings of the same capacity
+and adding them would double-count a recurring donor's lifetime total. Log space so
+one very large donor cannot outrank genuine fit. Normalised within the result set, so
+it orders this query rather than scoring people absolutely. The 0.35 floor means a
+perfect-fit small donor still beats a poor-fit large one: capacity tilts the ranking,
+it does not replace it.
+
 That single change moved the top-5 total from **$974 to $7.9M** on the same query.
+
+**What this number is not.** It is a capacity proxy, not a forecast -- "a conversation
+here is worth roughly this much", not "this person will give $142,807". The
+multipliers are judgement rather than fitted values: no outcome data exists here to
+fit them against, and they were tuned on a synthetic distribution. Given a real file
+with contact and response history, they should be fitted, and the ranking would then
+be an expected value in the proper sense rather than a well-reasoned heuristic.
 
 **Amounts and dates are SQL; judgement is the judge model.** The schema description
 tells the compiler to put every threshold in `filters` and reserve gates and scores

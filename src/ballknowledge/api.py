@@ -23,8 +23,12 @@ from .engine import Engine
 from .rubric import LLMUsage, Rubric, compile_rubric
 from .sanitize import MAX_PROFILE_CHARS, MAX_QUERY_CHARS, clean_profile, clean_query
 
-DB = "data/processed/ball.duckdb"
-PROCESSED = Path("data/processed")
+# These endpoints (groups, trends, where-do-I-fit) are specific to the research
+# corpus. They name it explicitly rather than reading a module-level path, so that
+# adding a corpus cannot quietly repoint them.
+WORKS = get_domain("works")
+DB = WORKS.db
+PROCESSED = Path(WORKS.processed)
 RESULTS = Path("results")
 
 app = FastAPI(title="Ball Knowledge")

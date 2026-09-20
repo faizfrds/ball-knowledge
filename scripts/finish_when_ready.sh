@@ -13,7 +13,7 @@ done
 echo "embeddings landed: $(ls -la data/processed/embeddings.npy | awk '{print $5}') bytes"
 
 echo "=== building BM25 ==="
-uv run python -c "import sys; sys.path.insert(0,'src'); from ballknowledge.index import build_bm25; build_bm25()" || exit 1
+uv run python -c "import sys; sys.path.insert(0,'src'); from ballknowledge.index import build_bm25; from ballknowledge.domain import get; d=get('works'); build_bm25(d.processed, d.db, d.table, d.id_col, d.index_sql)" || exit 1
 
 echo "=== restarting API so it picks up the index ==="
 pkill -f "uvicorn" 2>/dev/null; sleep 2

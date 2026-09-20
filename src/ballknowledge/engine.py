@@ -84,8 +84,33 @@ class Engine:
     def index(self):
         if self._index is None:
             from .index import HybridIndex
-            self._index = HybridIndex.load(self.processed)
+            idx = HybridIndex.load(self.processed)
+            self._verify_index(idx)
+            self._index = idx
         return self._index
+
+    def _verify_index(self, idx) -> None:
+        """Refuse an index built from a different corpus.
+
+        The vectors and the database are separate files, so nothing structural stops
+        one domain's embeddings sitting next to another's rows. A sample of ids is
+        checked against the table: if they do not belong, searching would return
+        fluent, confidently wrong results rather than an error.
+        """
+        sample = idx.ids[:: max(len(idx.ids) // 50, 1)][:50]
+        if not sample:
+            raise RuntimeError(f"{self.domain.name}: index at {self.processed} is empty")
+        con = self.con()
+        found = con.execute(
+            f"SELECT count(*) FROM {self.domain.table} "
+            f"WHERE {self.domain.id_col} IN ?", [sample]).fetchone()[0]
+        con.close()
+        if found < len(sample) * 0.9:
+            raise RuntimeError(
+                f"{self.domain.name}: the index at {self.processed} does not match "
+                f"{self.db} -- only {found}/{len(sample)} sampled ids exist in "
+                f"{self.domain.table}. Rebuild it with "
+                f"`scripts/index_domain.py --domain {self.domain.name}`.")
 
     def con(self):
         return duckdb.connect(self.db, read_only=True)

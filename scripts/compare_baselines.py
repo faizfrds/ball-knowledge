@@ -167,16 +167,19 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--k", type=int, default=10)
     p.add_argument("--arms", default="bm25,semantic,ball")
     p.add_argument("--bootstrap", type=int, default=1000)
+    p.add_argument("--domain", default="works")
     args = p.parse_args(argv)
 
+    from ballknowledge.domain import get as get_domain
     from ballknowledge.engine import Engine
     from ballknowledge.index import HybridIndex
     from ballknowledge.rubric import LLMUsage
 
     queries = QUERIES[:args.n_queries]
     arms = args.arms.split(",")
-    eng = Engine(db=args.db)
-    idx = HybridIndex.load("data/processed")
+    dom = get_domain(args.domain)
+    eng = Engine(domain=dom)
+    idx = HybridIndex.load(dom.processed)
     con = duckdb.connect(args.db, read_only=True)
 
     def texts_for(ids: list[str]) -> dict[str, str]:

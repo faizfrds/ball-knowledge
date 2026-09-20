@@ -43,6 +43,8 @@ GPT-5.6 Luna sees only the natural-language query and the allowlisted field sche
 
 Semantic embeddings and BM25 select a pool of at most 2,000 people from 14,052 eligible constituents. Jev then evaluates Luna's gates, score criteria, and bonuses using only the raw fields named by each criterion. Jev receives no embeddings, similarity scores, BM25 scores, fused ranks, or gold labels. Code combines the weighted Jev results and uses constituent ID only for exact ties.
 
+The figures in this report were measured with a 2,000-person Jev pool. The interactive backend default has subsequently been reduced to **200 candidates**. Hybrid retrieval still ranks the full eligible population; only its top 200 proceed to Jev.
+
 The measured live runner completed all four full-corpus queries in **374.2 seconds**. Jev reranking took 43.3–95.9 seconds per query with criteria evaluated concurrently. Embeddings were cached for constituent cards; only Luna's new retrieval phrasings required new vectors.
 
 ## Decision-layer note
@@ -100,3 +102,19 @@ The **$390 high-reasoning estimate** is the most appropriate planning figure for
 If Opus mirrored Jev's criterion-by-criterion architecture instead of combining each person's criteria into one request, it would make roughly 43,132 calls. Using the measured 14.61 million input tokens and assuming 1,000 reasoning tokens per judgment, the projected cost rises to approximately **$1,178**. At 2,000 reasoning tokens per judgment it rises to approximately **$2,256**. With no reasoning overhead and exactly the measured Jev token volume, the Opus-equivalent floor would still be about **$99.54**.
 
 Claude Opus 5 Fast mode is advertised as roughly 2.5 times faster at twice the base price. The efficient high-reasoning projection would therefore be approximately **$780** in Fast mode. Actual wall time would depend on account rate limits and allowed concurrency; the benchmark does not contain a live Opus 5 latency measurement, so no measured latency-win claim should be made against Opus itself.
+
+## Top-200 production projection
+
+The production default now passes the hybrid top 200 to Jev instead of the top 2,000. These are linear projections from the measured 2,000-candidate run; no new quality benchmark was run.
+
+| Component | Projected per-query result |
+|---|---:|
+| Full-population hybrid retrieval over 14,052 eligible people | ~8.6 seconds |
+| Jev reranking of 200 candidates | ~7.7 seconds |
+| Warm end-to-end query, including final top-20 actions | ~20–25 seconds |
+| Cold query including Luna rubric planning | ~45–85 seconds |
+| Jev input, including the final-action pass | ~0.37M tokens |
+| Jev cost at $0.42/M input and free output | **~$0.16** |
+| Total known model cost | **~$0.16–$0.17** |
+
+The one-time corpus embedding cost remains approximately $0.015 with `text-embedding-3-small` or $0.096 with `text-embedding-3-large`. New query embeddings cost a fraction of a cent. The main unresolved tradeoff is candidate recall at 200: the cost and latency projections are reliable first-order estimates, but the existing benchmark does not establish whether all important prospects survive the smaller retrieval cutoff.

@@ -304,7 +304,7 @@ Add:
 Recommended initial defaults:
 
 ```text
-candidate cap: 2,000 for interactive runs
+candidate cap: 200 for interactive runs
 maximum supported cap: 20,000
 RRF k: 60
 BM25 contribution: one rank list per phrasing
@@ -510,7 +510,7 @@ POST /api/query-jobs/:id/cancel
 {
   "query": "...",
   "asOf": "2026-08-31",
-  "candidateCap": 2000,
+  "candidateCap": 200,
   "explainTop": true
 }
 ```

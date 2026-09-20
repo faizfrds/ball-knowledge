@@ -34,7 +34,7 @@ const MD_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-live.
 const EMBEDDING_TELEMETRY_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-embedding-telemetry.json");
 const VECTOR_CACHE_PATH = path.join(REPO_ROOT, "data", "retrieval-cache.sqlite");
 const JEV_CACHE_PATH = path.join(REPO_ROOT, "data", "complex-benchmark-jev-cache.sqlite");
-const CANDIDATE_CAP = 2_000;
+const CANDIDATE_CAP = 200;
 const ACTION_FIELDS = [
   "gift_recency_band", "gift_frequency_band", "giving_amount_band", "engagement_events",
   "interaction_summary", "career_change_band", "affiliation_type", "class_year", "city", "state",
@@ -420,7 +420,7 @@ async function main(): Promise<void> {
       population: { eligibility: "checkEligibility eligibleForContact as of cutoff", eligibleN: eligibleIds.length,
         totalConstituentRows: constituents.length },
       retrieval: { semantic: "full-population cosine ranking over cached text-embedding-3-small vectors",
-        hybrid: "GPT-5.6 Luna compiles query-specific retrieval phrasings; BM25 and embedding rank lists fuse with RRF k=60 to select at most 2,000 candidates. Planner filters are retained for audit but not applied because semantic concepts must be judged by Jev against raw fields.",
+        hybrid: `GPT-5.6 Luna compiles query-specific retrieval phrasings; BM25 and embedding rank lists fuse with RRF k=60 to select at most ${CANDIDATE_CAP} candidates. Planner filters are retained for audit but not applied because semantic concepts must be judged by Jev against raw fields.`,
         candidatePoolSize: Math.min(CANDIDATE_CAP, eligibleIds.length), vectorCacheSize,
         embedding: { ...vectors.status, usage: embeddingTelemetry } },
       rubricPlanning: { model: DEFAULT_RUBRIC_PLANNER_MODEL,
@@ -443,7 +443,7 @@ async function main(): Promise<void> {
     const lines = [
       "# Full-Corpus Live Fundraising Benchmark", "",
       `Frozen query set: [complex-benchmark-gold-v1.json](complex-benchmark-gold-v1.json). Cutoff ${AS_OF}; eligible population ${eligibleIds.length.toLocaleString()}.`,
-      "Semantic-only ranks the full population. GPT-5.6 Luna compiles query-specific filters, retrieval phrasings, and scoring criteria. Semantic+BM25 selects at most 2,000 candidates; Jev scores Luna's rubric over scoped raw fields, code ranks the results, and Jev and OpenAI make final action choices for the Jev top 20. No judgment model receives embeddings or retrieval scores.",
+      `Semantic-only ranks the full population. GPT-5.6 Luna compiles query-specific filters, retrieval phrasings, and scoring criteria. Semantic+BM25 selects at most ${CANDIDATE_CAP} candidates; Jev scores Luna's rubric over scoped raw fields, code ranks the results, and Jev and OpenAI make final action choices for the Jev top 20. No judgment model receives embeddings or retrieval scores.`,
       "",
       "| Query | Ranker | Relevant / N | Recall@100 | Recall@500 | Recall@2k | NDCG@10 | NDCG@20 | P@20 | Hits@20 | Rank ms |",
       "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",

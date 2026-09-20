@@ -11,7 +11,8 @@ import {
 import type { ConstituentCard, ConstituentCardFields } from "./item-card.js";
 import { reciprocalRankFusion } from "./rrf.js";
 
-export const DEFAULT_CANDIDATE_CAP = 2_000;
+/** Interactive default: hybrid retrieval narrows the full population before Jev judgment. */
+export const DEFAULT_CANDIDATE_CAP = 200;
 export const MAX_CANDIDATE_CAP = 20_000;
 const DEFAULT_RRF_K = 60;
 

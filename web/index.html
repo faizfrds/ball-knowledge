@@ -245,20 +245,22 @@ $("#hint").onclick=e=>{if(e.target.tagName==="I"){q.value=e.target.textContent;g
 $("#corpus").onclick=e=>{if(e.target.dataset&&e.target.dataset.d)setDomain(e.target.dataset.d)};
 
 /* ── progress ──────────────────────────────────────────────────────── */
-const STEPS=["compile","filter","retrieve","gate","score","rank","explain"];
+// These are the actual GiveCampus stages. The final result reason is assembled
+// from rubric rank + action; this path does not make a separate explanation call.
+const STEPS=["compile rubric","hybrid filter + jev rerank","final actions"];
 let timer=null;
 function progStart(){
   prog.classList.add("on"); let pct=4;
   steps.innerHTML=STEPS.map(s=>`<span data-s="${s}">${s}</span>`).join("");
   markStep(0,"live");
   prog.querySelector("i").style.width="4%";
-  let i=0;
   timer=setInterval(()=>{
     pct=Math.min(pct+Math.random()*7,92);
     prog.querySelector("i").style.width=pct+"%";
-    const n=Math.min(Math.floor(pct/13),STEPS.length-1);
-    if(n!==i){markStep(i,"done");markStep(n,"live");i=n}
   },620);
+}
+function progSearch(){
+  markStep(0,"done"); markStep(1,"live");
 }
 function markStep(i,cls){
   const el=steps.children[i]; if(el) el.className=cls;
@@ -379,7 +381,7 @@ $("#f").onsubmit=async e=>{
   const text=q.value.trim()||q.placeholder;
   const btn=$("#go"); btn.disabled=true;
   stage.classList.add("lifted");
-  out.innerHTML=`<div class="count"><span class="spin"></span>working</div>`;
+  out.innerHTML=`<div class="count"><span class="spin"></span>working · Jev is ranking up to 200 candidates and choosing the final actions</div>`;
   progStart();
   // A long paste is a person describing themselves, not a query.
   const isProfile=text.length>400 && DOMAIN==="works";
@@ -402,6 +404,7 @@ $("#f").onsubmit=async e=>{
         receiptBlock(r.receipt);
     }else{
       const rb=await api("/api/rubric",{query:text,domain:DOMAIN});
+      progSearch();
       const res=await api("/api/search",{query:text,rubric:rb.rubric,top_k:20,domain:DOMAIN});
       progEnd(res.receipt);
       const render=DOMAIN==="constituents"?person:paper;

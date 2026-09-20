@@ -39,6 +39,7 @@ import openai
 from ball_knowledge.config import SETTINGS
 from ball_knowledge.cost_receipt import ReceiptTotals
 from ball_knowledge.data.trec_ct import load_corpus_cache, parse_qrels, parse_topics
+from ball_knowledge.enrichment.store import EnrichmentStore
 from ball_knowledge.eval.baselines import SystemRunResult, run_bm25_only, run_hybrid, run_hybrid_rerank, run_llm_only
 from ball_knowledge.eval.ndcg import eligible_vs_excluded_accuracy, ndcg_at_k, qrels_by_topic
 from ball_knowledge.models import TrialLabel
@@ -150,7 +151,10 @@ async def run(args: argparse.Namespace) -> dict:
         require_recruiting=args.bk_require_recruiting,
         use_embeddings=args.bk_use_embeddings,
         explain_with_llm=args.bk_explain_with_llm,
+        enrichment_store=EnrichmentStore.load(args.enrichment_dir) if args.enrichment_dir else None,
     )
+    if args.enrichment_dir:
+        print(f"  loaded enrichment store: {len(bk_config.enrichment_store)} trials, columns={bk_config.enrichment_store.column_names()}")
 
     report: dict[str, dict] = {}
     raw: dict[str, list[dict]] = {}
@@ -325,6 +329,7 @@ def main() -> None:
         default=False,
         help="use a second OpenAI LLM call to explain the top 10 trials (default: False, deterministic rubric explain)",
     )
+    parser.add_argument("--enrichment-dir", type=Path, default=None, help="EnrichmentStore directory (see cli.py's `enrich` subcommand) to feed the Ball Knowledge rank score's bonus term")
     parser.add_argument("--out", type=Path, default=Path("eval_results"))
     args = parser.parse_args()
 

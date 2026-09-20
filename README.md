@@ -10,6 +10,8 @@ ranking. The LLM returns only at the end, to write one line of explanation per r
 Every model call sees one question and a few items, so nothing degrades as the pile
 grows. Built on 152,713 MIT papers from OpenAlex.
 
+Slides and assets: https://drive.google.com/drive/u/2/folders/1uzCF4OqcvO_LltvKoPcHxJ7ZZ7AIAkEz
+
 **All measurements are in [RESULTS.md](RESULTS.md)**, including the experiments that
 went against the design and the failures worth recording.
 

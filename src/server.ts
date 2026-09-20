@@ -17,6 +17,9 @@ import { buildWorklist, type WorklistEntry } from "./givecampus/worklist.js";
 import { createJob, explainTopEntries, getJob, listJobs, runJob } from "./givecampus/jobs.js";
 import { compileRubric } from "./llm/rubric.js";
 import { hasOpenAiKey } from "./llm/config.js";
+import { createQueryJob, getQueryJob, listQueryJobs, runQueryJob, cancelQueryJob } from "./pipeline/jobs.js";
+import { EmbeddingCache } from "./retrieval/embedding-cache.js";
+import { OpenAIEmbeddingsClient } from "./retrieval/embeddings.js";
 
 loadServerEnv();
 
@@ -231,6 +234,51 @@ async function router(
       Array.isArray(body.availableFields) ? (body.availableFields as { name: string; kind: string }[]) : [],
     );
     json(res, 200, outcome);
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/query-jobs") {
+    let body: Record<string, unknown>;
+    try {
+      body = (await readJsonBody(req)) as Record<string, unknown>;
+      const job = createQueryJob({
+        query: typeof body.query === "string" ? body.query : "",
+        asOf: typeof body.asOf === "string" ? body.asOf : undefined,
+        candidateCap: body.candidateCap === undefined ? undefined : Number(body.candidateCap),
+      });
+      const db = openDb(dbPath);
+      const key = process.env.OPENAI_API_KEY?.trim();
+      const embeddingCache = key ? new EmbeddingCache() : undefined;
+      const embedder = key ? new OpenAIEmbeddingsClient({ apiKey: key }) : undefined;
+      runQueryJob(db, job.id, { embedder, embeddingCache }).finally(() => {
+        embeddingCache?.close();
+        db.close();
+      });
+      json(res, 202, { jobId: job.id, status: job.status });
+    } catch (error) {
+      json(res, 400, { error: (error as Error).message });
+    }
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/api/query-jobs") {
+    json(res, 200, { jobs: listQueryJobs().map((job) => ({
+      id: job.id, status: job.status, stage: job.stage, progress: job.progress,
+      createdAt: job.createdAt, updatedAt: job.updatedAt,
+    })) });
+    return;
+  }
+  const queryJobMatch = url.pathname.match(/^\/api\/query-jobs\/([\w-]+)$/);
+  if (req.method === "GET" && queryJobMatch) {
+    const job = getQueryJob(queryJobMatch[1]!);
+    if (!job) json(res, 404, { error: "query_job_not_found" });
+    else json(res, 200, job);
+    return;
+  }
+  const cancelQueryJobMatch = url.pathname.match(/^\/api\/query-jobs\/([\w-]+)\/cancel$/);
+  if (req.method === "POST" && cancelQueryJobMatch) {
+    const job = cancelQueryJob(cancelQueryJobMatch[1]!);
+    if (!job) json(res, 404, { error: "query_job_not_found" });
+    else json(res, 200, { jobId: job.id, status: job.status });
     return;
   }
 

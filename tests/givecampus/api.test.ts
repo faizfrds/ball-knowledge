@@ -90,4 +90,14 @@ describe("API smoke", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toMatch(/html/);
   });
+
+  it("query-job API validates the required natural-language query", async () => {
+    const response = await fetch(`${base}/api/query-jobs`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ query: "", candidateCap: 20 }),
+    });
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ error: "query is required" });
+  });
 });

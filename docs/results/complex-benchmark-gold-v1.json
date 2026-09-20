@@ -1,0 +1,54 @@
+{
+  "protocol": "givecampus-complex-offline-v1",
+  "frozenAt": "2026-09-20",
+  "asOf": "2025-08-31",
+  "outcomeUse": "No post-cutoff gift or opportunity outcomes are loaded or scored.",
+  "population": "All contacts passing src/givecampus/eligibility.ts checkEligibility at asOf, using one shared population for every query and ranker. Contact eligibility requires individual, alive at cutoff, not suppressed, and at least one deliverable channel. Current-student status only restricts solicitation actions.",
+  "cutoffs": {
+    "days": { "30": 30, "90": 90, "180": 180, "365": 365, "730": 730, "1095": 1095, "1825": 1825 },
+    "paidGift": "status='paid' AND gift_type!='recurring_parent' AND gift_date<=asOf",
+    "connectedInteractionOutcomes": ["connected", "replied", "meeting_booked", "gift_received", "pledged"],
+    "solicitationPurposePattern": "solicit|ask|fundrais (case-insensitive)",
+    "meaningfulGiftUsd": 250,
+    "reunionWindowYears": [0, 1]
+  },
+  "queries": [
+    {
+      "id": "q1_lapsed_loyal_engaged",
+      "query": "Find previously loyal donors who have not given recently but remain meaningfully connected through events, volunteering, or responsive interactions, show a recent career-development signal, are reachable, and have not been solicited recently. Recommend personal outreach versus a broad invitation.",
+      "gold": "3 when eligible/reachable, at least 3 paid gifts by cutoff, no paid gift in prior 1095 days, at least one event attendance, active activity/volunteer record, or connected interaction in prior 730 days, plus a career row recorded in prior 180 days or no career rows and at least 3 such engagement records; no solicitation-purpose interaction in prior 30 days; no pledged/pending gift or meeting_booked interaction with follow_up_date on/after cutoff. 2 when the loyalty, lapse, engagement, and no-collision conditions hold but the career signal is absent/unknown. 1 when not hard-excluded and at least two of loyalty/lapse/engagement hold, or the core holds but one non-hard readiness condition fails. 0 when ineligible, recently solicited, not lapsed, or lacking recent connection.",
+      "actionGold": "personal_outreach for grade 3; broad_invite for grade 2 or 1; exclude for grade 0/hard exclusion; hold_for_review for unresolved evidence collision."
+    },
+    {
+      "id": "q2_stewardship_before_ask",
+      "query": "Find constituents who recently made a meaningful gift, have not received a recorded acknowledgement, remain contactable, and should receive a thank-you rather than another solicitation.",
+      "gold": "3 when eligible/reachable, at least one paid non-recurring gift of $250 or more in prior 90 days, and no thank-you/acknowledgement/stewardship-purpose interaction after the latest such gift. 2 when eligible/reachable, a paid non-recurring gift of $100 or more in prior 90 days, no recorded acknowledgement after it, but total recent paid gifts are below $250. 1 when eligible/reachable and a paid gift occurred in prior 90 days but acknowledgment evidence is missing or ambiguous. 0 otherwise. A recorded acknowledgement after the latest qualifying gift is a hard exclusion from thank-you relevance.",
+      "actionGold": "thank_you for grades 2-3; hold_for_review for grade 1; exclude for grade 0."
+    },
+    {
+      "id": "q3_reunion_reengagement",
+      "query": "Find lapsed alumni approaching a reunion year who still show non-giving affinity and should receive a reunion invitation rather than a direct ask.",
+      "gold": "3 when eligible/reachable, has an undergraduate degree with class_year<=cutoff year, has no paid non-recurring gift in prior 1095 days, class-year age in years is congruent to 0 or 1 modulo 5, and has event attendance, active activity/volunteer record, or connected interaction in prior 1825 days. 2 when alumni, lapse, reunion window, and affinity hold but class-year or affinity evidence is incomplete. 1 when exactly three of lapse, reunion window, and affinity hold. 0 otherwise. A current solicitation-purpose interaction in prior 30 days is a hard exclusion.",
+      "actionGold": "reunion_mailer for grade 3; event_invite for grade 2 or 1; exclude for grade 0/hard exclusion."
+    },
+    {
+      "id": "q4_upgrade_ask_review",
+      "query": "Find consistent donors with increasing engagement and evidence supporting a more personal conversation, but flag cases where the suggested ask would be a stretch or important capacity evidence is missing.",
+      "gold": "3 when eligible/reachable, at least 3 paid non-recurring gifts lifetime with at least 1 in prior 1825 days, recent-730-day event attendance plus connected interactions count exceeds the preceding 730-day count, a current career row was recorded by cutoff, and the largest prior paid gift is at least $250. 2 when consistent giving and increasing engagement hold but career evidence is absent or largest prior gift is below $250; this is review_needed, never a verified capacity finding. 1 when consistent giving holds but engagement has not increased or timing evidence is incomplete. 0 otherwise. Do not interpret title/employer as verified wealth or treat any score as donation probability.",
+      "actionGold": "ask for grade 3 only when deterministic solicitation permission holds; hold_for_review for grade 2; event_invite for grade 1; exclude for grade 0 or ineligible."
+    }
+  ],
+  "grading": {
+    "relevant": "grade > 0",
+    "ndcg": "Graded gain 2^grade-1, logarithmic discount log2(rank+1).",
+    "precisionRecall": "Binary relevant set defined as grade > 0.",
+    "mrr": "Reciprocal rank of first grade>0 result; 0 if none."
+  },
+  "retrieval": {
+    "bm25": "One BM25 rank list over the entire shared eligible pool for each exact query above; ties by constituent ID ascending.",
+    "fused": "Only computed when every query and eligible card has a compatible local cached embedding. RRF k=60 fuses BM25 and embedding ranks; no live API/network fallback.",
+    "candidateCap": 2000,
+    "reportedCutoffs": [100, 500, 2000]
+  },
+  "privacy": "Gold file contains no constituent identifiers or constituent-derived labels. Benchmark output contains only aggregate counts and metrics."
+}

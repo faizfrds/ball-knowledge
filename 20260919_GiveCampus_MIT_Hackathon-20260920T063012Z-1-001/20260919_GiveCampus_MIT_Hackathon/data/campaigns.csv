@@ -1,0 +1,16 @@
+id,school_id,name,campaign_type,audience_description,goal_type,goal_amount,goal_donor_count,starts_at,ends_at,status,default_fund_id,is_recurring_enabled,is_match_or_challenge_active
+1,1,GiveCampus University Giving Form,general_form,All constituents,dollar,5000.00,,2019-07-01T04:00:00Z,2028-06-30T23:00:00Z,active,1,true,false
+2,1,FY2027 Annual Fund,annual_fund,"Alumni, parents, and friends",dollar,3500000.00,,2026-07-01T04:00:00Z,2027-06-30T23:00:00Z,active,2,true,false
+3,1,GiveCampus University Giving Day 2026,giving_day,Entire university community,donor,,2500,2026-09-15T04:00:00Z,2026-10-15T23:00:00Z,upcoming,1,true,true
+4,1,Class of 2001 25th Reunion,reunion,Class of 2001 alumni,dollar,250000.00,,2026-04-01T04:00:00Z,2026-10-31T23:00:00Z,active,22,false,false
+5,1,First-Generation Scholars,crowdfunding,Alumni and friends,dollar,75000.00,,2026-02-01T04:00:00Z,2026-04-15T23:00:00Z,completed,4,true,true
+6,1,Women's Soccer Championship Fund,athletics,Athletics alumni and fans,donor,,350,2026-08-01T04:00:00Z,2026-11-15T23:00:00Z,active,13,true,false
+7,1,Library Renewal Initiative,capital,Leadership donors,dollar,8000000.00,,2025-07-01T04:00:00Z,2027-06-30T23:00:00Z,active,6,false,true
+8,1,Engineering Makerspace Challenge,crowdfunding,Engineering alumni,dollar,125000.00,,2025-02-01T04:00:00Z,2025-03-20T23:00:00Z,completed,7,false,true
+9,1,Student Emergency Response 2024,emergency,Entire university community,dollar,50000.00,,2024-09-05T04:00:00Z,2024-10-05T23:00:00Z,archived,5,true,true
+10,1,Parent and Family Fund 2025,annual_fund,Parents and families,dollar,300000.00,,2024-07-01T04:00:00Z,2025-06-30T23:00:00Z,completed,17,true,false
+11,1,Arts on Campus 2025,crowdfunding,Arts alumni and friends,donor,,500,2025-01-15T04:00:00Z,2025-04-30T23:00:00Z,completed,11,false,false
+12,1,GiveCampus University Giving Day 2025,giving_day,Entire university community,donor,,2200,2025-09-15T04:00:00Z,2025-10-16T23:00:00Z,completed,1,true,true
+13,1,Calendar Year-End 2025,annual_fund,All donors,dollar,1000000.00,,2025-11-15T04:00:00Z,2025-12-31T23:00:00Z,completed,2,true,false
+14,1,Community Service Week 2024,crowdfunding,Students and service alumni,donor,,300,2024-03-01T04:00:00Z,2024-04-15T23:00:00Z,archived,15,false,false
+15,1,FY2024 Annual Fund,annual_fund,"Alumni, parents, and friends",dollar,2800000.00,,2023-07-01T04:00:00Z,2024-06-30T23:00:00Z,archived,2,true,false

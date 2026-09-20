@@ -13,3 +13,5 @@ export type { CompiledRubric, RubricClause, AvailableField, CompileOutcome, JevQ
 export { explainRanked, validateReason, containsBannedClaim, MAX_EXPLAIN_ITEMS } from "./explain.js";
 export type { ExplainItem, ItemExplanation, ExplainOutcome } from "./explain.js";
 export { runLlmSmoke } from "./smoke.js";
+export { compilePipelineRubric } from "./pipeline-rubric.js";
+export type { PipelineCompileOutcome } from "./pipeline-rubric.js";

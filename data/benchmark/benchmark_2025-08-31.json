@@ -1,0 +1,846 @@
+{
+  "benchmarkVersion": "1.0.0",
+  "datasetVersion": "1.2",
+  "dbPath": "D:\\ball-knowledge\\data\\givecampus.sqlite",
+  "trainCutoff": "2023-08-31",
+  "devCutoffs": [
+    "2024-08-31"
+  ],
+  "heldOutCutoff": "2025-08-31",
+  "windowDays": 90,
+  "outcomeDefinition": "paid gifts (status='paid', gift_type != 'recurring_parent') with gift_date in (T0, T0+90d], excluding gifts after deceased_date",
+  "populationDefinition": "entity_type='individual' AND deceased=0 AND (deceased_date NULL or > T0) AND do_not_solicit=0 AND (email deliverable OR phone available); identical id set for every ranker",
+  "selection": [
+    {
+      "scope": "priority_index_weight_set",
+      "candidates": [
+        "priority_base",
+        "priority_recency_heavy",
+        "priority_engagement_heavy",
+        "priority_whynow_heavy",
+        "priority_no_capacity",
+        "priority_monetary_heavy"
+      ],
+      "criterion": "mean NDCG@20 over dev cutoffs; tie-break mean P@20, then declared candidate order",
+      "devScores": [
+        {
+          "candidate": "priority_base",
+          "meanNdcgAt20": 0.1936,
+          "meanPrecisionAt20": 0.25
+        },
+        {
+          "candidate": "priority_recency_heavy",
+          "meanNdcgAt20": 0.2371,
+          "meanPrecisionAt20": 0.3
+        },
+        {
+          "candidate": "priority_engagement_heavy",
+          "meanNdcgAt20": 0.18,
+          "meanPrecisionAt20": 0.25
+        },
+        {
+          "candidate": "priority_whynow_heavy",
+          "meanNdcgAt20": 0.224,
+          "meanPrecisionAt20": 0.3
+        },
+        {
+          "candidate": "priority_no_capacity",
+          "meanNdcgAt20": 0.1971,
+          "meanPrecisionAt20": 0.25
+        },
+        {
+          "candidate": "priority_monetary_heavy",
+          "meanNdcgAt20": 0.1039,
+          "meanPrecisionAt20": 0.15
+        }
+      ],
+      "selected": "priority_recency_heavy"
+    },
+    {
+      "scope": "trained_lr_hyperparams",
+      "candidates": [
+        "trained_lr_lr_a",
+        "trained_lr_lr_b",
+        "trained_lr_lr_c",
+        "trained_lr_lr_d",
+        "trained_lr_lr_e",
+        "trained_lr_lr_f"
+      ],
+      "criterion": "mean NDCG@20 over dev cutoffs; tie-break mean P@20, then declared candidate order",
+      "devScores": [
+        {
+          "candidate": "trained_lr_lr_a",
+          "meanNdcgAt20": 0.1477,
+          "meanPrecisionAt20": 0.2
+        },
+        {
+          "candidate": "trained_lr_lr_b",
+          "meanNdcgAt20": 0.1477,
+          "meanPrecisionAt20": 0.2
+        },
+        {
+          "candidate": "trained_lr_lr_c",
+          "meanNdcgAt20": 0.1063,
+          "meanPrecisionAt20": 0.15
+        },
+        {
+          "candidate": "trained_lr_lr_d",
+          "meanNdcgAt20": 0.1052,
+          "meanPrecisionAt20": 0.15
+        },
+        {
+          "candidate": "trained_lr_lr_e",
+          "meanNdcgAt20": 0.3157,
+          "meanPrecisionAt20": 0.35
+        },
+        {
+          "candidate": "trained_lr_lr_f",
+          "meanNdcgAt20": 0.321,
+          "meanPrecisionAt20": 0.35
+        }
+      ],
+      "selected": "trained_lr_lr_f"
+    }
+  ],
+  "dev": [
+    {
+      "t0": "2024-08-31",
+      "windowEnd": "2024-11-29",
+      "eligibleN": 14052,
+      "donorCount": 706,
+      "results": [
+        {
+          "rankerId": "trained_lr_lr_f",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_f)",
+          "metrics": {
+            "precisionAt20": 0.35,
+            "precisionAt100": 0.34,
+            "ndcgAt20": 0.321,
+            "ndcgAt100": 0.326,
+            "hitsAt20": 7,
+            "hitsAt100": 34,
+            "amountTop100": 16010,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 10
+        },
+        {
+          "rankerId": "trained_lr_lr_e",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_e)",
+          "metrics": {
+            "precisionAt20": 0.35,
+            "precisionAt100": 0.35,
+            "ndcgAt20": 0.3157,
+            "ndcgAt100": 0.3323,
+            "hitsAt20": 7,
+            "hitsAt100": 35,
+            "amountTop100": 16025,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "rfm_r_heavy",
+          "family": "rfm_weighted",
+          "description": "Weighted RFM on normalized subscores: RFM recency-heavy (0.6/0.2/0.2)",
+          "metrics": {
+            "precisionAt20": 0.3,
+            "precisionAt100": 0.34,
+            "ndcgAt20": 0.2442,
+            "ndcgAt100": 0.319,
+            "hitsAt20": 6,
+            "hitsAt100": 34,
+            "amountTop100": 16140,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 7
+        },
+        {
+          "rankerId": "priority_recency_heavy",
+          "family": "priority_index",
+          "description": "Engineered priority index: Recency-heavy 0.45R+0.15F+0.15M+0.10E+0.10N+0.05C",
+          "metrics": {
+            "precisionAt20": 0.3,
+            "precisionAt100": 0.24,
+            "ndcgAt20": 0.2371,
+            "ndcgAt100": 0.227,
+            "hitsAt20": 6,
+            "hitsAt100": 24,
+            "amountTop100": 24380,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 10
+        },
+        {
+          "rankerId": "priority_whynow_heavy",
+          "family": "priority_index",
+          "description": "Engineered priority index: Why-now-heavy 0.15R+0.15F+0.15M+0.10E+0.40N+0.05C",
+          "metrics": {
+            "precisionAt20": 0.3,
+            "precisionAt100": 0.18,
+            "ndcgAt20": 0.224,
+            "ndcgAt100": 0.1698,
+            "hitsAt20": 6,
+            "hitsAt100": 18,
+            "amountTop100": 20055,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 12
+        },
+        {
+          "rankerId": "rfm_fm_only",
+          "family": "rfm_weighted",
+          "description": "Weighted RFM on normalized subscores: RFM no-recency (0/0.5/0.5): frequency+monetary only",
+          "metrics": {
+            "precisionAt20": 0.25,
+            "precisionAt100": 0.25,
+            "ndcgAt20": 0.2017,
+            "ndcgAt100": 0.2276,
+            "hitsAt20": 5,
+            "hitsAt100": 25,
+            "amountTop100": 14592.4,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 8
+        },
+        {
+          "rankerId": "priority_no_capacity",
+          "family": "priority_index",
+          "description": "Engineered priority index: No capacity proxy (0.25R+0.225F+0.225M+0.15E+0.15N+0C)",
+          "metrics": {
+            "precisionAt20": 0.25,
+            "precisionAt100": 0.28,
+            "ndcgAt20": 0.1971,
+            "ndcgAt100": 0.2572,
+            "hitsAt20": 5,
+            "hitsAt100": 28,
+            "amountTop100": 13295,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "priority_base",
+          "family": "priority_index",
+          "description": "Engineered priority index: Proposed base 0.25R+0.20F+0.20M+0.15E+0.15N+0.05C",
+          "metrics": {
+            "precisionAt20": 0.25,
+            "precisionAt100": 0.26,
+            "ndcgAt20": 0.1936,
+            "ndcgAt100": 0.238,
+            "hitsAt20": 5,
+            "hitsAt100": 26,
+            "amountTop100": 8195,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "priority_engagement_heavy",
+          "family": "priority_index",
+          "description": "Engineered priority index: Engagement-heavy 0.15R+0.15F+0.15M+0.30E+0.20N+0.05C",
+          "metrics": {
+            "precisionAt20": 0.25,
+            "precisionAt100": 0.18,
+            "ndcgAt20": 0.18,
+            "ndcgAt100": 0.1647,
+            "hitsAt20": 5,
+            "hitsAt100": 18,
+            "amountTop100": 18730,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 8
+        },
+        {
+          "rankerId": "trained_lr_lr_a",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_a)",
+          "metrics": {
+            "precisionAt20": 0.2,
+            "precisionAt100": 0.31,
+            "ndcgAt20": 0.1477,
+            "ndcgAt100": 0.2744,
+            "hitsAt20": 4,
+            "hitsAt100": 31,
+            "amountTop100": 11735,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 15
+        },
+        {
+          "rankerId": "trained_lr_lr_b",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_b)",
+          "metrics": {
+            "precisionAt20": 0.2,
+            "precisionAt100": 0.31,
+            "ndcgAt20": 0.1477,
+            "ndcgAt100": 0.2742,
+            "hitsAt20": 4,
+            "hitsAt100": 31,
+            "amountTop100": 11735,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "rfm_lexicographic",
+          "family": "rfm_lex",
+          "description": "Design RFM baseline: sequential sort R asc, F desc, M desc (lexicographic, not scored)",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.24,
+            "ndcgAt20": 0.1199,
+            "ndcgAt100": 0.2105,
+            "hitsAt20": 3,
+            "hitsAt100": 24,
+            "amountTop100": 23880,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 12
+        },
+        {
+          "rankerId": "rfm_equal",
+          "family": "rfm_weighted",
+          "description": "Weighted RFM on normalized subscores: RFM equal weights (1/3 each)",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.33,
+            "ndcgAt20": 0.1076,
+            "ndcgAt100": 0.2902,
+            "hitsAt20": 3,
+            "hitsAt100": 33,
+            "amountTop100": 14860,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "rfm_f_heavy",
+          "family": "rfm_weighted",
+          "description": "Weighted RFM on normalized subscores: RFM frequency-heavy (0.2/0.6/0.2)",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.34,
+            "ndcgAt20": 0.1076,
+            "ndcgAt100": 0.2977,
+            "hitsAt20": 3,
+            "hitsAt100": 34,
+            "amountTop100": 15410,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 8
+        },
+        {
+          "rankerId": "trained_lr_lr_c",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_c)",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.32,
+            "ndcgAt20": 0.1063,
+            "ndcgAt100": 0.2822,
+            "hitsAt20": 3,
+            "hitsAt100": 32,
+            "amountTop100": 15800,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 10
+        },
+        {
+          "rankerId": "trained_lr_lr_d",
+          "family": "trained",
+          "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_d)",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.33,
+            "ndcgAt20": 0.1052,
+            "ndcgAt100": 0.2876,
+            "hitsAt20": 3,
+            "hitsAt100": 33,
+            "amountTop100": 15825,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "priority_monetary_heavy",
+          "family": "priority_index",
+          "description": "Engineered priority index: Monetary-heavy 0.15R+0.15F+0.40M+0.10E+0.15N+0.05C",
+          "metrics": {
+            "precisionAt20": 0.15,
+            "precisionAt100": 0.27,
+            "ndcgAt20": 0.1039,
+            "ndcgAt100": 0.2301,
+            "hitsAt20": 3,
+            "hitsAt100": 27,
+            "amountTop100": 14635,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 9
+        },
+        {
+          "rankerId": "gift_recency_only",
+          "family": "recency",
+          "description": "Most-recent paid gift first; never-donors last (id tiebreak)",
+          "metrics": {
+            "precisionAt20": 0.1,
+            "precisionAt100": 0.24,
+            "ndcgAt20": 0.0838,
+            "ndcgAt100": 0.2092,
+            "hitsAt20": 2,
+            "hitsAt100": 24,
+            "amountTop100": 23880,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 10
+        },
+        {
+          "rankerId": "rfm_m_heavy",
+          "family": "rfm_weighted",
+          "description": "Weighted RFM on normalized subscores: RFM monetary-heavy (0.2/0.2/0.6)",
+          "metrics": {
+            "precisionAt20": 0.1,
+            "precisionAt100": 0.28,
+            "ndcgAt20": 0.0762,
+            "ndcgAt100": 0.2429,
+            "hitsAt20": 2,
+            "hitsAt100": 28,
+            "amountTop100": 14105,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 10
+        },
+        {
+          "rankerId": "seeded_random",
+          "family": "random",
+          "description": "Seeded uniform random (seed 260904); order-independent floor baseline",
+          "metrics": {
+            "precisionAt20": 0,
+            "precisionAt100": 0.03,
+            "ndcgAt20": 0,
+            "ndcgAt100": 0.0254,
+            "hitsAt20": 0,
+            "hitsAt100": 3,
+            "amountTop100": 575,
+            "amountPopulation": 401717.28,
+            "donorCount": 706,
+            "populationN": 14052
+          },
+          "runtimeMs": 28
+        }
+      ]
+    }
+  ],
+  "heldOut": {
+    "t0": "2025-08-31",
+    "windowEnd": "2025-11-29",
+    "eligibleN": 14052,
+    "donorCount": 601,
+    "results": [
+      {
+        "rankerId": "trained_lr_lr_e",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_e)",
+        "metrics": {
+          "precisionAt20": 0.15,
+          "precisionAt100": 0.14,
+          "ndcgAt20": 0.269,
+          "ndcgAt100": 0.1851,
+          "hitsAt20": 3,
+          "hitsAt100": 14,
+          "amountTop100": 28015,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 13
+      },
+      {
+        "rankerId": "trained_lr_lr_f",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_f)",
+        "metrics": {
+          "precisionAt20": 0.15,
+          "precisionAt100": 0.15,
+          "ndcgAt20": 0.1935,
+          "ndcgAt100": 0.1665,
+          "hitsAt20": 3,
+          "hitsAt100": 15,
+          "amountTop100": 29500,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 11
+      },
+      {
+        "rankerId": "rfm_m_heavy",
+        "family": "rfm_weighted",
+        "description": "Weighted RFM on normalized subscores: RFM monetary-heavy (0.2/0.2/0.6)",
+        "metrics": {
+          "precisionAt20": 0.15,
+          "precisionAt100": 0.16,
+          "ndcgAt20": 0.1383,
+          "ndcgAt100": 0.1483,
+          "hitsAt20": 3,
+          "hitsAt100": 16,
+          "amountTop100": 64375,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 8
+      },
+      {
+        "rankerId": "trained_lr_lr_d",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_d)",
+        "metrics": {
+          "precisionAt20": 0.15,
+          "precisionAt100": 0.14,
+          "ndcgAt20": 0.1182,
+          "ndcgAt100": 0.1323,
+          "hitsAt20": 3,
+          "hitsAt100": 14,
+          "amountTop100": 28275,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 10
+      },
+      {
+        "rankerId": "gift_recency_only",
+        "family": "recency",
+        "description": "Most-recent paid gift first; never-donors last (id tiebreak)",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.13,
+          "ndcgAt20": 0.1045,
+          "ndcgAt100": 0.1277,
+          "hitsAt20": 2,
+          "hitsAt100": 13,
+          "amountTop100": 25958,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 8
+      },
+      {
+        "rankerId": "rfm_fm_only",
+        "family": "rfm_weighted",
+        "description": "Weighted RFM on normalized subscores: RFM no-recency (0/0.5/0.5): frequency+monetary only",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.14,
+          "ndcgAt20": 0.1039,
+          "ndcgAt100": 0.1328,
+          "hitsAt20": 2,
+          "hitsAt100": 14,
+          "amountTop100": 2800,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 6
+      },
+      {
+        "rankerId": "rfm_lexicographic",
+        "family": "rfm_lex",
+        "description": "Design RFM baseline: sequential sort R asc, F desc, M desc (lexicographic, not scored)",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.13,
+          "ndcgAt20": 0.0946,
+          "ndcgAt100": 0.124,
+          "hitsAt20": 2,
+          "hitsAt100": 13,
+          "amountTop100": 25958,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 15
+      },
+      {
+        "rankerId": "trained_lr_lr_c",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_c)",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.15,
+          "ndcgAt20": 0.0832,
+          "ndcgAt100": 0.1384,
+          "hitsAt20": 2,
+          "hitsAt100": 15,
+          "amountTop100": 28300,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "rfm_r_heavy",
+        "family": "rfm_weighted",
+        "description": "Weighted RFM on normalized subscores: RFM recency-heavy (0.6/0.2/0.2)",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.16,
+          "ndcgAt20": 0.0775,
+          "ndcgAt100": 0.1397,
+          "hitsAt20": 2,
+          "hitsAt100": 16,
+          "amountTop100": 27315,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 8
+      },
+      {
+        "rankerId": "priority_no_capacity",
+        "family": "priority_index",
+        "description": "Engineered priority index: No capacity proxy (0.25R+0.225F+0.225M+0.15E+0.15N+0C)",
+        "metrics": {
+          "precisionAt20": 0.1,
+          "precisionAt100": 0.2,
+          "ndcgAt20": 0.0663,
+          "ndcgAt100": 0.1685,
+          "hitsAt20": 2,
+          "hitsAt100": 20,
+          "amountTop100": 33725,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "rfm_equal",
+        "family": "rfm_weighted",
+        "description": "Weighted RFM on normalized subscores: RFM equal weights (1/3 each)",
+        "metrics": {
+          "precisionAt20": 0.05,
+          "precisionAt100": 0.19,
+          "ndcgAt20": 0.0448,
+          "ndcgAt100": 0.1685,
+          "hitsAt20": 1,
+          "hitsAt100": 19,
+          "amountTop100": 28715,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "rfm_f_heavy",
+        "family": "rfm_weighted",
+        "description": "Weighted RFM on normalized subscores: RFM frequency-heavy (0.2/0.6/0.2)",
+        "metrics": {
+          "precisionAt20": 0.05,
+          "precisionAt100": 0.21,
+          "ndcgAt20": 0.0448,
+          "ndcgAt100": 0.1854,
+          "hitsAt20": 1,
+          "hitsAt100": 21,
+          "amountTop100": 29315,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "priority_engagement_heavy",
+        "family": "priority_index",
+        "description": "Engineered priority index: Engagement-heavy 0.15R+0.15F+0.15M+0.30E+0.20N+0.05C",
+        "metrics": {
+          "precisionAt20": 0.05,
+          "precisionAt100": 0.15,
+          "ndcgAt20": 0.0348,
+          "ndcgAt100": 0.1265,
+          "hitsAt20": 1,
+          "hitsAt100": 15,
+          "amountTop100": 10028.2,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 10
+      },
+      {
+        "rankerId": "priority_base",
+        "family": "priority_index",
+        "description": "Engineered priority index: Proposed base 0.25R+0.20F+0.20M+0.15E+0.15N+0.05C",
+        "metrics": {
+          "precisionAt20": 0.05,
+          "precisionAt100": 0.18,
+          "ndcgAt20": 0.0323,
+          "ndcgAt100": 0.1511,
+          "hitsAt20": 1,
+          "hitsAt100": 18,
+          "amountTop100": 33575,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "priority_monetary_heavy",
+        "family": "priority_index",
+        "description": "Engineered priority index: Monetary-heavy 0.15R+0.15F+0.40M+0.10E+0.15N+0.05C",
+        "metrics": {
+          "precisionAt20": 0.05,
+          "precisionAt100": 0.14,
+          "ndcgAt20": 0.0323,
+          "ndcgAt100": 0.1172,
+          "hitsAt20": 1,
+          "hitsAt100": 14,
+          "amountTop100": 9850,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "priority_recency_heavy",
+        "family": "priority_index",
+        "description": "Engineered priority index: Recency-heavy 0.45R+0.15F+0.15M+0.10E+0.10N+0.05C",
+        "metrics": {
+          "precisionAt20": 0,
+          "precisionAt100": 0.16,
+          "ndcgAt20": 0,
+          "ndcgAt100": 0.1338,
+          "hitsAt20": 0,
+          "hitsAt100": 16,
+          "amountTop100": 27529.8,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "priority_whynow_heavy",
+        "family": "priority_index",
+        "description": "Engineered priority index: Why-now-heavy 0.15R+0.15F+0.15M+0.10E+0.40N+0.05C",
+        "metrics": {
+          "precisionAt20": 0,
+          "precisionAt100": 0.15,
+          "ndcgAt20": 0,
+          "ndcgAt100": 0.1254,
+          "hitsAt20": 0,
+          "hitsAt100": 15,
+          "amountTop100": 8679.8,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 9
+      },
+      {
+        "rankerId": "seeded_random",
+        "family": "random",
+        "description": "Seeded uniform random (seed 260904); order-independent floor baseline",
+        "metrics": {
+          "precisionAt20": 0,
+          "precisionAt100": 0.04,
+          "ndcgAt20": 0,
+          "ndcgAt100": 0.0344,
+          "hitsAt20": 0,
+          "hitsAt100": 4,
+          "amountTop100": 25565,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 15
+      },
+      {
+        "rankerId": "trained_lr_lr_a",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_a)",
+        "metrics": {
+          "precisionAt20": 0,
+          "precisionAt100": 0.17,
+          "ndcgAt20": 0,
+          "ndcgAt100": 0.1443,
+          "hitsAt20": 0,
+          "hitsAt100": 17,
+          "amountTop100": 33450,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 12
+      },
+      {
+        "rankerId": "trained_lr_lr_b",
+        "family": "trained",
+        "description": "L2 logistic regression on [r,f,m,e,n,c] trained at TRAIN cutoff (hyperparams lr_b)",
+        "metrics": {
+          "precisionAt20": 0,
+          "precisionAt100": 0.17,
+          "ndcgAt20": 0,
+          "ndcgAt100": 0.1443,
+          "hitsAt20": 0,
+          "hitsAt100": 17,
+          "amountTop100": 33450,
+          "amountPopulation": 621724.04,
+          "donorCount": 601,
+          "populationN": 14052
+        },
+        "runtimeMs": 10
+      }
+    ]
+  },
+  "selectedPriorityIndex": "priority_recency_heavy",
+  "selectedLr": "trained_lr_lr_f",
+  "jevMerged": false
+}

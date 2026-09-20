@@ -1,0 +1,14 @@
+id,school_id,name,event_type,starts_at,ends_at,city,state,latitude,longitude,audience_description,capacity,related_campaign_id
+1,1,Alumni Weekend 2025,reunion,2025-09-26T18:00:00Z,2025-09-28T22:00:00Z,Northbridge,MA,42.0800,-71.6500,All alumni,450,
+2,1,Boston Alumni Reception,regional,2025-11-06T18:00:00Z,2025-11-06T22:00:00Z,Boston,MA,42.3600,-71.0600,Boston-area alumni and friends,140,
+3,1,Engineering Innovation Showcase,academic,2026-03-12T18:00:00Z,2026-03-12T22:00:00Z,Northbridge,MA,42.0800,-71.6500,Engineering alumni and families,180,8
+4,1,Young Alumni Service Day,service,2026-04-18T18:00:00Z,2026-04-18T22:00:00Z,Boston,MA,42.3500,-71.0800,Alumni from the classes of 2016–2026,120,14
+5,1,Women's Soccer Alumni Match,athletics,2026-05-02T18:00:00Z,2026-05-02T22:00:00Z,Northbridge,MA,42.0900,-71.6400,Women's soccer alumni and families,160,6
+6,1,Parent and Family Weekend 2025,family,2025-10-03T18:00:00Z,2025-10-05T22:00:00Z,Northbridge,MA,42.0800,-71.6500,Parents and families,700,10
+7,1,Winter Arts Gala,arts,2025-12-05T18:00:00Z,2025-12-05T22:00:00Z,New York,NY,40.7500,-73.9900,Arts alumni and friends,220,11
+8,1,Class of 2001 Reunion Planning Night,reunion,2026-06-11T18:00:00Z,2026-06-11T22:00:00Z,Washington,DC,38.9100,-77.0400,Class of 2001 alumni,85,4
+9,1,Boston Giving Day Kickoff,regional,2026-10-01T18:00:00Z,2026-10-01T22:00:00Z,Boston,MA,42.3600,-71.0600,Boston-area alumni and friends,175,3
+10,1,GiveCampus University Homecoming,homecoming,2026-10-10T18:00:00Z,2026-10-11T22:00:00Z,Northbridge,MA,42.0800,-71.6500,Entire university community,1800,3
+11,1,New York Alumni Reception,regional,2026-11-05T18:00:00Z,2026-11-05T22:00:00Z,New York,NY,40.7500,-73.9900,New York-area alumni and friends,220,3
+12,1,Washington Leadership Dinner,leadership,2026-11-12T18:00:00Z,2026-11-12T22:00:00Z,Washington,DC,38.9100,-77.0400,Leadership donors and prospects,90,7
+13,1,San Francisco Innovation Forum,academic,2026-12-03T18:00:00Z,2026-12-03T22:00:00Z,San Francisco,CA,37.7800,-122.4200,West Coast technology alumni,160,3

@@ -1,0 +1,25 @@
+id,school_id,name,fund_code,category,active
+1,1,Wherever Needed Most,GCU-UNR,unrestricted,true
+2,1,Annual Fund,GCU-AF,unrestricted,true
+3,1,General Scholarship Fund,GCU-SCH,scholarships,true
+4,1,First-Generation Student Fund,GCU-FGEN,scholarships,true
+5,1,Student Emergency Fund,GCU-EMRG,student_support,true
+6,1,Library and Learning Commons,GCU-LIB,academic,true
+7,1,Engineering Innovation Fund,GCU-ENG,academic,true
+8,1,Computer Science Fund,GCU-CS,academic,true
+9,1,Humanities Fund,GCU-HUM,academic,true
+10,1,Faculty Research Fund,GCU-RES,academic,true
+11,1,Arts and Performance Fund,GCU-ART,arts,true
+12,1,Athletics Excellence Fund,GCU-ATH,athletics,true
+13,1,Women's Soccer Fund,GCU-WSOC,athletics,true
+14,1,Men's Basketball Fund,GCU-MBB,athletics,true
+15,1,Community Service Fund,GCU-SERV,student_life,true
+16,1,Student Clubs Fund,GCU-CLUB,student_life,true
+17,1,Parent and Family Fund,GCU-PAR,student_support,true
+18,1,Alumni Programs Fund,GCU-ALUM,alumni,true
+19,1,Campus Renewal Fund,GCU-CAP,capital,true
+20,1,Business School Fund,GCU-BUS,academic,true
+21,1,Health Sciences Fund,GCU-HSCI,academic,true
+22,1,Class of 2001 Scholarship,GCU-C01,scholarships,true
+23,1,Old Library Fund,LIB-OLD,academic,false
+24,1,Legacy Unrestricted Fund,LEGACY-UNR,unrestricted,false

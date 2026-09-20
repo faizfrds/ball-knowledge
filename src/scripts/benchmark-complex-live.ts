@@ -27,6 +27,7 @@ const AS_OF = "2025-08-31";
 const GOLD_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-gold-v1.json");
 const JSON_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-live.json");
 const MD_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-live.md");
+const EMBEDDING_TELEMETRY_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-embedding-telemetry.json");
 const VECTOR_CACHE_PATH = path.join(REPO_ROOT, "data", "retrieval-cache.sqlite");
 const JEV_CACHE_PATH = path.join(REPO_ROOT, "data", "complex-benchmark-jev-cache.sqlite");
 const CANDIDATE_CAP = 2_000;
@@ -215,6 +216,7 @@ async function main(): Promise<void> {
     });
     const vectors = loadLocalVectors(cards, frozen.queries);
     if (!vectors.status.available) throw new Error(`Exact full-corpus vectors unavailable: ${vectors.status.reason}`);
+    const embeddingTelemetry = JSON.parse(fs.readFileSync(EMBEDDING_TELEMETRY_PATH, "utf8")) as Record<string, unknown>;
     console.log(JSON.stringify({ phase: "live_decisions_started", eligibleN: cards.length,
       candidateCap: CANDIDATE_CAP, queries: frozen.queries.length, embeddingCache: vectors.status.cachePath }));
 
@@ -329,9 +331,9 @@ async function main(): Promise<void> {
       population: { eligibility: "checkEligibility eligibleForContact as of cutoff", eligibleN: eligibleIds.length,
         totalConstituentRows: constituents.length },
       retrieval: { semantic: "full-population cosine ranking over cached text-embedding-3-small vectors",
-        hybrid: "full-population BM25 and embedding rank lists fused with RRF k=60; top-2,000 candidate pool",
+      hybrid: "full-population BM25 and embedding rank lists fused with RRF k=60; top-2,000 candidate pool",
         candidatePoolSize: Math.min(CANDIDATE_CAP, eligibleIds.length), vectorCacheSize,
-        embedding: vectors.status },
+        embedding: { ...vectors.status, usage: embeddingTelemetry } },
       finalDecision: { jev: "Jev receives only allowlisted as-of-safe raw field values for the hybrid top 20 per query; never embeddings or retrieval scores",
         llm: "OpenAI receives the same top-20 raw field values and a separate final action choice; ask is overridden when solicitation is disallowed",
         actions: ACTIONS, evaluation: "exact action agreement only where the frozen gold label maps to one of the four supported actions; unsupported hold/exclude labels are unscored" },
@@ -365,7 +367,7 @@ async function main(): Promise<void> {
         lines.push(`| ${result.id} | ${name} | ${value.quality.goldActionScoredN} / 20 | ${value.quality.exactActionAccuracy.toFixed(4)} | ${value.quality.correctN} | ${value.quality.permissionOverrides} | ${value.telemetry.liveCalls} | ${value.telemetry.inputTokens} | ${value.telemetry.outputTokens} |`);
       }
     }
-    lines.push("", `Embedding: ${vectors.status.model}; full vector cache contains ${vectorCacheSize.toLocaleString()} embeddings.`,
+    lines.push("", `Embedding: ${vectors.status.model}; full vector cache contains ${vectorCacheSize.toLocaleString()} embeddings; ${String(embeddingTelemetry.totalInputTokens)} total input tokens, estimated $${Number(embeddingTelemetry.estimatedTotalCostUsd).toFixed(6)}.`,
       "Gold metrics are full-population graded retrieval metrics. Exact action accuracy excludes grade-0/exclude and hold-for-review cases because those are not among the four allowed actions.",
       "Q3 grade-2 gold branch is unreachable in the frozen reference implementation; interpret Q3 grade counts accordingly.",
       `Total live runner time: ${report.totalRuntimeMs} ms.`, "");

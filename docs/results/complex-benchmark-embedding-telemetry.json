@@ -1,0 +1,21 @@
+{
+  "model": "text-embedding-3-small",
+  "eligibleN": 14052,
+  "queryN": 4,
+  "vectorCount": 14056,
+  "batches": 141,
+  "cacheHits": 0,
+  "liveInputs": 14056,
+  "totalInputTokens": 735279,
+  "liveInputTokens": 735279,
+  "cachedInputTokens": 0,
+  "estimatedLiveCostUsd": 0.014706,
+  "estimatedTotalCostUsd": 0.014706,
+  "priceUsdPerMillionInputTokens": 0.02,
+  "latencyBatchMs": {
+    "p50": 569,
+    "p95": 711,
+    "n": 141
+  },
+  "measurement": "first full live embedding pass; later cache-only regeneration made no API calls"
+}

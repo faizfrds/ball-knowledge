@@ -13,6 +13,7 @@ import { retrieveCandidates } from "../retrieval/retrieve.js";
 const AS_OF = "2025-08-31";
 const GOLD_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-gold-v1.json");
 const CACHE_PATH = path.join(REPO_ROOT, "data", "retrieval-cache.sqlite");
+const TELEMETRY_PATH = path.join(REPO_ROOT, "docs", "results", "complex-benchmark-embedding-telemetry.json");
 
 function byId<T extends { constituent_id: number }>(rows: T[]): Map<number, T[]> {
   const result = new Map<number, T[]>();
@@ -67,7 +68,26 @@ async function main(): Promise<void> {
       evidenceVersion: EVIDENCE_VERSION,
       onEmbeddingTelemetry: (value) => {
         telemetry = value;
-        console.log(JSON.stringify({ phase: "embedding_complete", ...value }));
+        const totalInputTokens = value.liveInputTokens + value.cachedInputTokens;
+        const report = {
+          model: value.model,
+          eligibleN: cards.length,
+          queryN: gold.queries.length,
+          vectorCount: value.liveInputs + value.cacheHits,
+          batches: value.batches,
+          cacheHits: value.cacheHits,
+          liveInputs: value.liveInputs,
+          totalInputTokens,
+          liveInputTokens: value.liveInputTokens,
+          cachedInputTokens: value.cachedInputTokens,
+          estimatedLiveCostUsd: value.estimatedLiveCostUsd,
+          estimatedTotalCostUsd: Number((totalInputTokens / 1_000_000 * 0.02).toFixed(6)),
+          priceUsdPerMillionInputTokens: 0.02,
+          latencyBatchMs: value.latencyBatchMs,
+        };
+        fs.mkdirSync(path.dirname(TELEMETRY_PATH), { recursive: true });
+        fs.writeFileSync(TELEMETRY_PATH, `${JSON.stringify(report, null, 2)}\n`, "utf8");
+        console.log(JSON.stringify({ phase: "embedding_complete", ...report }));
       },
     });
     console.log(JSON.stringify({

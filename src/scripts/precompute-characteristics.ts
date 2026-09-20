@@ -10,7 +10,8 @@
  *
  * Usage:
  *   npx tsx src/scripts/precompute-characteristics.ts [--db data/givecampus.sqlite]
- *     [--as-of 2026-08-31] [--pool-cap 150] [--chunk 25] [--concurrency 4]
+ *     [--as-of 2026-08-31] [--pool-cap 150 | --all] [--char-ids id1,id2,...]
+ *     [--chunk 25] [--concurrency 4]
  *     [--max-live-calls 1500] [--cache data/characteristic-cache.sqlite]
  *     [--out data/characteristics] [--mock]
  *
@@ -79,8 +80,12 @@ async function main() {
   const cachePath = arg("--cache", path.join("data", "characteristic-cache.sqlite"))!;
   const outDir = arg("--out", path.join("data", "characteristics"))!;
   const mock = argFlag("--mock");
+  const allPopulation = argFlag("--all");
+  const charIdsArg = arg("--char-ids");
   if (!fs.existsSync(dbPath)) throw new Error(`DB missing: ${dbPath}`);
-  if (!Number.isInteger(poolCap) || poolCap < 1 || poolCap > 5000) throw new Error("--pool-cap must be 1..5000");
+  if (!Number.isInteger(poolCap) || poolCap < 1 || (allPopulation ? poolCap > 30_000 : poolCap > 5000)) {
+    throw new Error(`--pool-cap must be 1..${allPopulation ? "30_000" : "5000"}`);
+  }
 
   const live = !mock;
   const db = new Database(dbPath, { readonly: true });
@@ -90,8 +95,17 @@ async function main() {
       .map((p) => p.id)
       .sort((a, b) => a - b);
     if (population.length === 0) throw new Error(`Eligible population empty at ${asOf}`);
-    const pool = buildLivePool(db, asOf, { cap: poolCap });
-    const poolIds = pool.poolIds;
+    const poolIds = allPopulation ? population.slice(0, poolCap) : buildLivePool(db, asOf, { cap: poolCap }).poolIds;
+    const bank = buildCharacteristicQuestions();
+    const selectedIds = charIdsArg
+      ? String(charIdsArg)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : bank.map((q) => q.id);
+    const questions = bank.filter((q) => selectedIds.includes(q.id));
+    const missing = selectedIds.filter((id) => !questions.some((q) => q.id === id));
+    if (missing.length > 0) throw new Error(`Unknown characteristic ids: ${missing.join(", ")}`);
     const client = live
       ? new TypesafeJevClient({ maxRetries: 2, timeoutMs: 20_000 })
       : new LocalCharacteristicClient();
@@ -101,12 +115,13 @@ async function main() {
       asOf,
       client,
       cache,
+      questions,
       chunkSize,
       models: [JEV_LIVE_MODEL_PIN, JEV_LIVE_MODEL_FALLBACK],
       concurrency,
       maxLiveCalls,
     });
-    const questionIds = buildCharacteristicQuestions().map((q) => q.id);
+    const questionIds = questions.map((q) => q.id);
     const counts = summarizeVerdicts(result, questionIds);
     const uncached = result.records.filter((r) => !r.cacheHit && !r.error).map((r) => r.latencyMs).sort((a, b) => a - b);
     // Enumerate the simulated request log (one row per characteristic).

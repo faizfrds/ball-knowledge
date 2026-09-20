@@ -21,7 +21,28 @@
       "model": "text-embedding-3-small",
       "missingCardVectors": 0,
       "missingQueryVectors": 0,
-      "reason": null
+      "reason": null,
+      "usage": {
+        "model": "text-embedding-3-small",
+        "eligibleN": 14052,
+        "queryN": 4,
+        "vectorCount": 14056,
+        "batches": 141,
+        "cacheHits": 0,
+        "liveInputs": 14056,
+        "totalInputTokens": 735279,
+        "liveInputTokens": 735279,
+        "cachedInputTokens": 0,
+        "estimatedLiveCostUsd": 0.014706,
+        "estimatedTotalCostUsd": 0.014706,
+        "priceUsdPerMillionInputTokens": 0.02,
+        "latencyBatchMs": {
+          "p50": 569,
+          "p95": 711,
+          "n": 141
+        },
+        "measurement": "first full live embedding pass; later cache-only regeneration made no API calls"
+      }
     }
   },
   "finalDecision": {
@@ -74,7 +95,7 @@
             "hitsAt20": 12,
             "relevantN": 3803
           },
-          "latencyMs": 93
+          "latencyMs": 74
         },
         "semanticPlusBm25": {
           "metrics": {
@@ -89,7 +110,7 @@
             "hitsAt20": 9,
             "relevantN": 3803
           },
-          "latencyMs": 430,
+          "latencyMs": 332,
           "retrievedCandidateCount": 2000
         }
       },
@@ -111,17 +132,17 @@
           "telemetry": {
             "requestedModel": "jev-1.13.0",
             "evaluatedN": 20,
-            "liveCalls": 20,
-            "cacheHits": 0,
+            "liveCalls": 0,
+            "cacheHits": 20,
             "errorsOrUnknown": 0,
             "resolvedModelCounts": {
               "jev-1.13.0": 20
             },
-            "inputTokens": 11947,
-            "outputTokens": 1139,
+            "inputTokens": 0,
+            "outputTokens": 0,
             "latencyMs": {
-              "p50": 186,
-              "p95": 541
+              "p50": 0,
+              "p95": 0
             },
             "finalActions": {
               "thank_you": 1,
@@ -135,41 +156,41 @@
           "quality": {
             "topTwentyN": 20,
             "goldActionScoredN": 9,
-            "exactActionAccuracy": 0,
-            "correctN": 0,
+            "exactActionAccuracy": 0.222222,
+            "correctN": 2,
             "modelActionCounts": {
-              "thank_you": 18,
-              "event_invite": 0,
+              "thank_you": 15,
+              "event_invite": 2,
               "reunion_mailer": 0,
-              "ask": 2
+              "ask": 3
             },
             "permissionOverrides": 0
           },
           "telemetry": {
-            "requestedModel": "gpt-4.1-mini",
+            "requestedModel": "gpt-5.4-mini",
             "evaluatedN": 20,
             "liveCalls": 20,
             "cacheHits": 0,
-            "unknownActions": 18,
+            "unknownActions": 15,
             "resolvedModelCounts": {
-              "gpt-4.1-mini-2025-04-14": 20
+              "gpt-5.4-mini-2026-03-17": 20
             },
-            "inputTokens": 7627,
-            "outputTokens": 244,
+            "inputTokens": 7607,
+            "outputTokens": 370,
             "latencyMs": {
-              "p50": 744,
-              "p95": 1592
+              "p50": 867,
+              "p95": 2067
             },
             "finalActions": {
               "thank_you": 0,
-              "event_invite": 0,
+              "event_invite": 2,
               "reunion_mailer": 0,
-              "ask": 2
+              "ask": 3
             }
           }
         }
       },
-      "semanticRetrievalLatencyMs": 93
+      "semanticRetrievalLatencyMs": 74
     },
     {
       "id": "q2_stewardship_before_ask",
@@ -198,7 +219,7 @@
             "hitsAt20": 0,
             "relevantN": 246
           },
-          "latencyMs": 90
+          "latencyMs": 70
         },
         "semanticPlusBm25": {
           "metrics": {
@@ -213,7 +234,7 @@
             "hitsAt20": 0,
             "relevantN": 246
           },
-          "latencyMs": 391,
+          "latencyMs": 269,
           "retrievedCandidateCount": 2000
         }
       },
@@ -235,17 +256,17 @@
           "telemetry": {
             "requestedModel": "jev-1.13.0",
             "evaluatedN": 20,
-            "liveCalls": 20,
-            "cacheHits": 0,
+            "liveCalls": 0,
+            "cacheHits": 20,
             "errorsOrUnknown": 0,
             "resolvedModelCounts": {
               "jev-1.13.0": 20
             },
-            "inputTokens": 11782,
-            "outputTokens": 1150,
+            "inputTokens": 0,
+            "outputTokens": 0,
             "latencyMs": {
-              "p50": 180,
-              "p95": 247
+              "p50": 0,
+              "p95": 0
             },
             "finalActions": {
               "thank_you": 10,
@@ -270,22 +291,22 @@
             "permissionOverrides": 0
           },
           "telemetry": {
-            "requestedModel": "gpt-4.1-mini",
+            "requestedModel": "gpt-5.4-mini",
             "evaluatedN": 20,
             "liveCalls": 20,
             "cacheHits": 0,
-            "unknownActions": 18,
+            "unknownActions": 17,
             "resolvedModelCounts": {
-              "gpt-4.1-mini-2025-04-14": 20
+              "gpt-5.4-mini-2026-03-17": 20
             },
-            "inputTokens": 7474,
-            "outputTokens": 256,
+            "inputTokens": 7454,
+            "outputTokens": 376,
             "latencyMs": {
-              "p50": 783,
-              "p95": 1725
+              "p50": 887,
+              "p95": 1408
             },
             "finalActions": {
-              "thank_you": 0,
+              "thank_you": 1,
               "event_invite": 2,
               "reunion_mailer": 0,
               "ask": 0
@@ -293,7 +314,7 @@
           }
         }
       },
-      "semanticRetrievalLatencyMs": 90
+      "semanticRetrievalLatencyMs": 70
     },
     {
       "id": "q3_reunion_reengagement",
@@ -321,7 +342,7 @@
             "hitsAt20": 18,
             "relevantN": 4009
           },
-          "latencyMs": 96
+          "latencyMs": 59
         },
         "semanticPlusBm25": {
           "metrics": {
@@ -336,7 +357,7 @@
             "hitsAt20": 17,
             "relevantN": 4009
           },
-          "latencyMs": 370,
+          "latencyMs": 257,
           "retrievedCandidateCount": 2000
         }
       },
@@ -358,17 +379,17 @@
           "telemetry": {
             "requestedModel": "jev-1.13.0",
             "evaluatedN": 20,
-            "liveCalls": 20,
-            "cacheHits": 0,
+            "liveCalls": 0,
+            "cacheHits": 20,
             "errorsOrUnknown": 0,
             "resolvedModelCounts": {
               "jev-1.13.0": 20
             },
-            "inputTokens": 11055,
-            "outputTokens": 1220,
+            "inputTokens": 0,
+            "outputTokens": 0,
             "latencyMs": {
-              "p50": 189,
-              "p95": 256
+              "p50": 0,
+              "p95": 0
             },
             "finalActions": {
               "thank_you": 0,
@@ -385,38 +406,38 @@
             "exactActionAccuracy": 0,
             "correctN": 0,
             "modelActionCounts": {
-              "thank_you": 19,
+              "thank_you": 17,
               "event_invite": 0,
-              "reunion_mailer": 1,
+              "reunion_mailer": 3,
               "ask": 0
             },
             "permissionOverrides": 0
           },
           "telemetry": {
-            "requestedModel": "gpt-4.1-mini",
+            "requestedModel": "gpt-5.4-mini",
             "evaluatedN": 20,
             "liveCalls": 20,
             "cacheHits": 0,
-            "unknownActions": 19,
+            "unknownActions": 17,
             "resolvedModelCounts": {
-              "gpt-4.1-mini-2025-04-14": 20
+              "gpt-5.4-mini-2026-03-17": 20
             },
-            "inputTokens": 7039,
-            "outputTokens": 281,
+            "inputTokens": 7019,
+            "outputTokens": 409,
             "latencyMs": {
-              "p50": 831,
-              "p95": 1571
+              "p50": 861,
+              "p95": 1690
             },
             "finalActions": {
               "thank_you": 0,
               "event_invite": 0,
-              "reunion_mailer": 1,
+              "reunion_mailer": 3,
               "ask": 0
             }
           }
         }
       },
-      "semanticRetrievalLatencyMs": 96
+      "semanticRetrievalLatencyMs": 59
     },
     {
       "id": "q4_upgrade_ask_review",
@@ -446,7 +467,7 @@
             "hitsAt20": 10,
             "relevantN": 979
           },
-          "latencyMs": 95
+          "latencyMs": 58
         },
         "semanticPlusBm25": {
           "metrics": {
@@ -461,7 +482,7 @@
             "hitsAt20": 17,
             "relevantN": 979
           },
-          "latencyMs": 389,
+          "latencyMs": 258,
           "retrievedCandidateCount": 2000
         }
       },
@@ -483,17 +504,17 @@
           "telemetry": {
             "requestedModel": "jev-1.13.0",
             "evaluatedN": 20,
-            "liveCalls": 20,
-            "cacheHits": 0,
+            "liveCalls": 0,
+            "cacheHits": 20,
             "errorsOrUnknown": 0,
             "resolvedModelCounts": {
               "jev-1.13.0": 20
             },
-            "inputTokens": 11364,
-            "outputTokens": 1137,
+            "inputTokens": 0,
+            "outputTokens": 0,
             "latencyMs": {
-              "p50": 177,
-              "p95": 261
+              "p50": 0,
+              "p95": 0
             },
             "finalActions": {
               "thank_you": 3,
@@ -510,41 +531,41 @@
             "exactActionAccuracy": 0,
             "correctN": 0,
             "modelActionCounts": {
-              "thank_you": 20,
+              "thank_you": 19,
               "event_invite": 0,
               "reunion_mailer": 0,
-              "ask": 0
+              "ask": 1
             },
             "permissionOverrides": 0
           },
           "telemetry": {
-            "requestedModel": "gpt-4.1-mini",
+            "requestedModel": "gpt-5.4-mini",
             "evaluatedN": 20,
             "liveCalls": 20,
             "cacheHits": 0,
-            "unknownActions": 20,
+            "unknownActions": 19,
             "resolvedModelCounts": {
-              "gpt-4.1-mini-2025-04-14": 20
+              "gpt-5.4-mini-2026-03-17": 20
             },
-            "inputTokens": 7396,
-            "outputTokens": 230,
+            "inputTokens": 7376,
+            "outputTokens": 377,
             "latencyMs": {
-              "p50": 744,
-              "p95": 1862
+              "p50": 794,
+              "p95": 1351
             },
             "finalActions": {
               "thank_you": 0,
               "event_invite": 0,
               "reunion_mailer": 0,
-              "ask": 0
+              "ask": 1
             }
           }
         }
       },
-      "semanticRetrievalLatencyMs": 95
+      "semanticRetrievalLatencyMs": 58
     }
   ],
-  "totalRuntimeMs": 47088,
+  "totalRuntimeMs": 27174,
   "outputsContainConstituentIds": false,
   "rowLevelModelAnswersPersisted": false,
   "futureOutcomeLabelsLoaded": false,

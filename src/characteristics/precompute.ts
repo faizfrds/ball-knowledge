@@ -171,7 +171,9 @@ export async function precomputeCharacteristics(args: {
   maxLiveCalls?: number;
 }): Promise<PrecomputeResult> {
   const allQuestions = args.questions ?? buildCharacteristicQuestions();
-  if (allQuestions.length !== CHARACTERISTIC_COUNT) {
+  // Enforce full bank only for the default bank; explicit subsets (major
+  // questions, e.g. via --char-ids) are allowed at any size.
+  if (!args.questions && allQuestions.length !== CHARACTERISTIC_COUNT) {
     throw new Error(`Characteristic bank must hold exactly ${CHARACTERISTIC_COUNT} questions (got ${allQuestions.length})`);
   }
   const chunkSize = args.chunkSize ?? 25;

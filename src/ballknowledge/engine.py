@@ -18,6 +18,7 @@ import duckdb
 
 from .jev import JevClient, p_true
 from .rubric import LLMUsage, Rubric, compile_rubric, explain
+from .sanitize import clean_query, filter_filters
 
 PACK = 25          # items per gate request; see benchmark.json for the accuracy cost
 GATE_PASS = 0.5    # floor on the COMBINED gate score (geometric mean, see below)
@@ -52,6 +53,7 @@ class Receipt:
     gate_relaxed: bool = False
     judged: int = 0
     filters_dropped: list = field(default_factory=list)
+    filters_rejected: list = field(default_factory=list)
 
     @property
     def total_cost(self) -> float:
@@ -64,6 +66,7 @@ class Receipt:
                 "jev": self.jev, "llm": self.llm,
                 "gate_relaxed": self.gate_relaxed,
                 "filters_dropped": self.filters_dropped,
+                "filters_rejected": self.filters_rejected,
                 "total_cost_usd": round(self.total_cost, 6)}
 
 
@@ -102,6 +105,7 @@ class Engine:
                rubric: Rubric | None = None, retrieval_weight: float | None = None,
                on_progress: Callable[[str, dict], None] | None = None) -> dict:
         w_ret = RETRIEVAL_WEIGHT if retrieval_weight is None else retrieval_weight
+        query = clean_query(query)
         r = Receipt(query=query)
         llm_usage = LLMUsage()
         t = time.time()
@@ -113,7 +117,13 @@ class Engine:
             on_progress("rubric", rubric.as_dict())
 
         # 1. Hard filters first: SQL is free and shrinks everything downstream.
+        # The compiler is an LLM and its output lands in a WHERE clause, so every
+        # fragment is checked against a column/function allowlist before it runs.
         t = time.time()
+        safe, refused = filter_filters(rubric.filters)
+        if refused:
+            r.filters_rejected = refused
+            rubric.filters = safe
         con = self.con()
         where = " AND ".join(f"({f})" for f in rubric.filters) or "TRUE"
         try:

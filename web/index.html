@@ -243,6 +243,7 @@ function receiptBlock(r){
     ${cell("total cost","$"+(r.total_cost_usd??0).toFixed(4))}
     ${r.gate_relaxed?`<div class="flag">Gates relaxed — nothing cleared the threshold, showing best-scoring candidates.</div>`:""}
     ${(r.filters_dropped||[]).length?`<div class="flag">${r.filters_dropped.length} compiler filter(s) dropped: they left under 200 documents.</div>`:""}
+    ${(r.filters_rejected||[]).length?`<div class="flag">${r.filters_rejected.length} compiler filter(s) rejected by the SQL allowlist.</div>`:""}
   </div>`;
 }
 function paper(r,i){

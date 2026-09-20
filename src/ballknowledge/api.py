@@ -15,10 +15,11 @@ import duckdb
 from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .engine import Engine
 from .rubric import LLMUsage, Rubric, compile_rubric
+from .sanitize import MAX_PROFILE_CHARS, MAX_QUERY_CHARS, clean_profile, clean_query
 
 DB = "data/processed/ball.duckdb"
 PROCESSED = Path("data/processed")
@@ -35,15 +36,15 @@ def con():
 
 
 class SearchReq(BaseModel):
-    query: str
-    top_k: int = 20
-    pool: int = 20_000
+    query: str = Field(min_length=1, max_length=MAX_QUERY_CHARS * 4)
+    top_k: int = Field(default=20, ge=1, le=100)
+    pool: int = Field(default=20_000, ge=50, le=40_000)
     rubric: dict | None = None      # an edited rubric re-ranks without recompiling
 
 
 class ProfileReq(BaseModel):
-    text: str
-    top_k: int = 5
+    text: str = Field(min_length=1, max_length=MAX_PROFILE_CHARS * 4)
+    top_k: int = Field(default=5, ge=1, le=50)
 
 
 @app.get("/api/health")
@@ -61,16 +62,22 @@ def health() -> dict:
 @app.post("/api/rubric")
 def make_rubric(req: SearchReq) -> dict:
     """Compile only -- the UI shows the rubric as chips before paying for a search."""
+    q = clean_query(req.query)
+    if not q:
+        raise HTTPException(400, "query is empty after cleaning")
     u = LLMUsage()
-    r = compile_rubric(req.query, u)
-    return {"rubric": r.as_dict(), "llm": u.as_dict()}
+    r = compile_rubric(q, u)
+    return {"rubric": r.as_dict(), "llm": u.as_dict(), "query": q}
 
 
 @app.post("/api/search")
 def search(req: SearchReq) -> dict:
-    rubric = Rubric.from_dict(req.rubric, req.query) if req.rubric else None
+    q = clean_query(req.query)
+    if not q:
+        raise HTTPException(400, "query is empty after cleaning")
+    rubric = Rubric.from_dict(req.rubric, q) if req.rubric else None
     try:
-        return engine.search(req.query, top_k=req.top_k, pool=req.pool, rubric=rubric)
+        return engine.search(q, top_k=req.top_k, pool=req.pool, rubric=rubric)
     except Exception as e:
         raise HTTPException(500, f"{type(e).__name__}: {e}")
 
@@ -107,8 +114,11 @@ def _fit(text: str, top_k: int) -> dict:
     profile becomes the query. One LLM call, then the ordinary pipeline."""
     from openai import OpenAI
 
-    if not text.strip():
-        raise HTTPException(400, "no text provided")
+    # Uploaded documents are the least trusted input in the system: PDFs and docx
+    # carry invisible characters routinely, and the text goes straight to a model.
+    text = clean_profile(text)
+    if not text:
+        raise HTTPException(400, "no usable text provided")
 
     u = LLMUsage()
     r = OpenAI().chat.completions.create(

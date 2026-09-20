@@ -232,7 +232,36 @@ default was set to 0.4 and the full comparison re-run. On 20 queries it made thi
 **worse**: nDCG 0.856 -> 0.824, P@10 0.660 -> 0.625. The sweep was underpowered and its
 apparent gain was noise. Default reverted to 0.
 
-## 9. Known weaknesses
+## 9. Input handling
+
+Two untrusted inputs reach this system: the query a person types, and documents they
+paste or upload. Both are cleaned at the API boundary, and the compiler's SQL output
+is treated as untrusted too.
+
+**Text cleaning.** NFKC normalisation, then Unicode categories Cc/Cf/Cs are removed --
+control codes, zero-width joiners and bidirectional overrides, which are invisible on
+screen but reach the model and can make displayed text differ from what is sent.
+Whitespace is collapsed and length capped (2,000 chars for a query, 40,000 for a
+pasted profile). Newline and tab survive, because pasted documents need them.
+
+**SQL from the compiler is validated, not trusted.** `engine.search` puts the
+compiler's `filters` straight into a WHERE clause, so a query crafted to steer the
+compiler is an injection path. Every fragment is checked against an allowlist: each
+bare identifier must be a known column, a known function or a SQL keyword, and a
+blocklist rejects statement separators, comments, DDL/DML, set operations and
+DuckDB's file-reading table functions. Unrecognised fragments are dropped and
+reported in the receipt as `filters_rejected` rather than repaired. The connection is
+read-only, but that alone would not stop `ATTACH` or `read_csv`.
+
+Verified end to end: given a rubric containing `1=1; ATTACH '/tmp/evil.db' AS e`,
+`title IN (SELECT title FROM read_csv('/etc/passwd'))` and `secret_admin_column = 1`
+alongside a legitimate `publication_year >= 2020`, the engine ran only the legitimate
+filter, reported three rejections, returned results, and left the database intact.
+
+Request bodies are also bounded by the schema: `pool` 50-40,000, `top_k` 1-100, and a
+query that is empty after cleaning returns 400 rather than reaching a model.
+
+## 10. Known weaknesses
 
 1. **The gold standard is model-derived.** κ=0.964 between two frontier models is
    strong agreement, not human ground truth. A shared blind spot would be inherited.
@@ -249,7 +278,7 @@ apparent gain was noise. Default reverted to 0.
    intervals are correspondingly wide, and the conjunction-heavy queries the
    architecture is built for are under-represented.
 
-## 10. Failures worth recording
+## 11. Failures worth recording
 
 | Failure | Cause | Resolution |
 |---|---|---|
@@ -264,7 +293,7 @@ apparent gain was noise. Default reverted to 0.
 | OpenAlex search arm | shared per-IP daily budget exhausted | replaced with BM25 over the same corpus |
 | Muse Spark arm | 0/300 requests succeeded via the gateway | unresolved |
 
-## 11. Reproducing
+## 12. Reproducing
 
 ```bash
 uv sync

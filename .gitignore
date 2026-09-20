@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Downloaded TREC corpus (multi-GB, fetched by scripts/download_trec_data.py)
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/index/
+
+# Local eval outputs
+eval_results/
+*.jsonl.cache
+
+.env
+.DS_Store

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ball Knowledge — Clinical Trials</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">●</span>
+    <div>
+      <h1>Ball Knowledge</h1>
+      <p class="subtitle">Regeneron vertical — eligibility criteria as a rubric, not a document</p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="match" role="tab" aria-selected="true">Patient → Trials</button>
+    <button class="tab" data-tab="design" role="tab" aria-selected="false">Design Benchmarking</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===================== Patient -> Trials ===================== -->
+  <section id="panel-match" class="panel active">
+    <div class="query-row">
+      <textarea id="patient-note" placeholder="Paste a patient note (age, sex, diagnoses, labs, history)…" rows="6"></textarea>
+      <div class="query-actions">
+        <button id="load-example" class="ghost">Load example note</button>
+        <button id="run-match" class="primary">Match trials</button>
+      </div>
+    </div>
+
+    <div id="match-status" class="status" hidden></div>
+
+    <div id="patient-rubric" class="rubric-row" hidden></div>
+
+    <div class="results-layout">
+      <div id="match-results" class="results-list"></div>
+      <aside id="match-receipt" class="receipt" hidden></aside>
+    </div>
+  </section>
+
+  <!-- ===================== Design Benchmarking ===================== -->
+  <section id="panel-design" class="panel">
+    <div class="query-row">
+      <textarea id="design-query" placeholder="Completed phase 3 trials in moderate-to-severe atopic dermatitis, with a placebo arm and an EASI-75 endpoint" rows="3"></textarea>
+      <div class="query-actions">
+        <button id="load-example-design" class="ghost">Load example query</button>
+        <button id="run-design" class="primary">Benchmark designs</button>
+      </div>
+    </div>
+
+    <div id="design-status" class="status" hidden></div>
+
+    <div id="design-rubric" class="rubric-row" hidden></div>
+
+    <div class="results-layout">
+      <div class="results-main">
+        <div id="enrollment-chart" class="chart-card" hidden></div>
+        <div id="design-results" class="results-list"></div>
+      </div>
+      <aside id="design-receipt" class="receipt" hidden></aside>
+    </div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

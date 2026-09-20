@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<clinical_study>
+  <id_info>
+    <org_study_id>RA-2021-001</org_study_id>
+    <nct_id>NCT99999999</nct_id>
+  </id_info>
+  <brief_title>A Study of Investigational Drug X in Adults With Moderate to Severe Rheumatoid Arthritis</brief_title>
+  <official_title>A Randomized, Double-Blind, Placebo-Controlled Study of Drug X in Adults With Moderate to Severe Rheumatoid Arthritis and Inadequate Response to Methotrexate</official_title>
+  <sponsors>
+    <lead_sponsor>
+      <agency>Example Biopharma</agency>
+    </lead_sponsor>
+  </sponsors>
+  <overall_status>Recruiting</overall_status>
+  <start_date>January 2022</start_date>
+  <completion_date>December 2024</completion_date>
+  <phase>Phase 3</phase>
+  <study_type>Interventional</study_type>
+  <primary_outcome>
+    <measure>ACR20 response at Week 24</measure>
+    <time_frame>24 weeks</time_frame>
+  </primary_outcome>
+  <secondary_outcome>
+    <measure>Change from baseline in DAS28-CRP</measure>
+    <time_frame>24 weeks</time_frame>
+  </secondary_outcome>
+  <enrollment type="Anticipated">450</enrollment>
+  <condition>Rheumatoid Arthritis</condition>
+  <arm_group>
+    <arm_group_label>Drug X</arm_group_label>
+    <arm_group_type>Experimental</arm_group_type>
+    <description>Drug X 200mg subcutaneous every 2 weeks</description>
+  </arm_group>
+  <arm_group>
+    <arm_group_label>Placebo</arm_group_label>
+    <arm_group_type>Placebo Comparator</arm_group_type>
+    <description>Matching placebo every 2 weeks</description>
+  </arm_group>
+  <intervention>
+    <intervention_type>Drug</intervention_type>
+    <intervention_name>Drug X</intervention_name>
+  </intervention>
+  <intervention>
+    <intervention_type>Drug</intervention_type>
+    <intervention_name>Placebo</intervention_name>
+  </intervention>
+  <eligibility>
+    <criteria>
+      <textblock>
+        Inclusion Criteria:
+
+          -  Age 18 to 75 years
+
+          -  Diagnosis of rheumatoid arthritis for at least 6 months
+
+          -  Inadequate response to methotrexate
+
+          -  ALT and AST less than 2.5 x ULN
+
+          -  eGFR at least 45 mL/min/1.73m2
+
+        Exclusion Criteria:
+
+          -  Active or latent tuberculosis
+
+          -  Pregnant or nursing women
+
+          -  Prior treatment with more than one biologic DMARD
+
+          -  Platelet count less than 100 x10^9/L
+      </textblock>
+    </criteria>
+    <gender>All</gender>
+    <minimum_age>18 Years</minimum_age>
+    <maximum_age>75 Years</maximum_age>
+    <healthy_volunteers>No</healthy_volunteers>
+  </eligibility>
+  <brief_summary>
+    <textblock>
+      This study evaluates the efficacy and safety of Drug X versus placebo in adults with
+      moderate to severe rheumatoid arthritis who have had an inadequate response to methotrexate.
+    </textblock>
+  </brief_summary>
+  <detailed_description>
+    <textblock>
+      Participants will be randomized 1:1 to receive Drug X or matching placebo, in addition to
+      background methotrexate, for 24 weeks.
+    </textblock>
+  </detailed_description>
+</clinical_study>

@@ -1,0 +1,37 @@
+[project]
+name = "ball-knowledge"
+version = "0.1.0"
+description = "Ball Knowledge / Regeneron vertical: matches patients to clinical trials by treating eligibility criteria as a rubric, and benchmarks trial designs for biostatistics planning."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "openai>=3.0",
+    "typesafe-sdk>=0.7.0",
+    "rank-bm25>=0.2.2",
+    "numpy>=1.26",
+    "pydantic>=2.7",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "python-dotenv>=1.0",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+rerank = ["cohere>=5.5"]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["ball_knowledge*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "live: hits the real OpenAI/TypeSafe APIs - needs API keys, costs money, excluded by default",
+]
+addopts = "-m 'not live'"

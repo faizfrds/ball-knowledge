@@ -7,6 +7,7 @@ dist/
 *.sqlite-journal
 *.sqlite-wal
 *.sqlite-shm
+*.sqlite.tmp*
 data/*.sqlite*
 !.gitkeep
 coverage/

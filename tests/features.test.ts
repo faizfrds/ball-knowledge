@@ -4,6 +4,8 @@ import {
   summarizeGifts,
   summarizeInteractions,
 } from "../src/features.js";
+import { sumCents } from "../src/normalize.js";
+import { assertAsOf } from "../src/data-access.js";
 
 const AS_OF = "2026-08-31";
 
@@ -86,5 +88,18 @@ describe("buildConstituentFeatures", () => {
       asOf: AS_OF,
     };
     expect(buildConstituentFeatures(args)).toEqual(buildConstituentFeatures(args));
+  });
+});
+
+describe("foundation invariants (finite/cents-safe money, as-of guard)", () => {
+  it("sums money via integer cents without float drift", () => {
+    expect(sumCents([0.1, 0.2])).toBe(0.3);
+    expect(sumCents(["19.99", "0.01"])).toBe(20);
+  });
+
+  it("rejects malformed or future as-of values", () => {
+    expect(() => assertAsOf("not-a-date")).toThrow(/invalid_asof/);
+    expect(() => assertAsOf("2099-01-01")).toThrow(/future_asof/);
+    expect(() => assertAsOf(AS_OF)).not.toThrow();
   });
 });

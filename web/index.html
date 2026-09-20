@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="GiveCampus Ball Knowledge — Giving Day Triage Board prototype. Ranked top-20 contact worklist with evidence-linked dossiers." />
+  <title>Giving Day Triage Board — GiveCampus Ball Knowledge</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#worklist-heading">Skip to worklist</a>
+  <a class="skip-link" href="#dossier-heading">Skip to dossier</a>
+
+  <header class="app-header" role="banner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">◈</span>
+      <div>
+        <p class="brand-title">Giving Day Triage Board</p>
+        <p class="brand-sub">GiveCampus Ball Knowledge · prototype</p>
+      </div>
+    </div>
+    <div class="header-badges" role="group" aria-label="Dataset and run status">
+      <span class="badge" id="dataset-badge" title="Dataset contract">GiveCampus University v1.2 · as-of 2026-08-31 · seed 260904</span>
+      <span class="badge badge-cache" id="cache-badge" title="Cache key + warmth">CACHE …</span>
+      <span class="badge badge-mode" id="api-mode-badge" role="status">MODE …</span>
+    </div>
+    <div class="header-actions">
+      <label class="role-switch" for="role-select">Role
+        <select id="role-select" aria-label="Staff role">
+          <option value="mgo" selected>MGO</option>
+          <option value="annual_giving">Annual Giving (read-only demo)</option>
+        </select>
+      </label>
+      <button type="button" class="btn btn-ghost" id="receipt-open-btn" aria-haspopup="dialog">Receipt</button>
+      <button type="button" class="btn btn-ghost rail-toggle" id="rail-toggle" aria-expanded="false" aria-controls="rail">Filters</button>
+    </div>
+  </header>
+
+  <div class="mode-banner" id="mode-banner" role="status" hidden></div>
+
+  <div class="layout">
+    <!-- LEFT RAIL -->
+    <aside class="rail" id="rail" aria-label="Query, rubric and run controls">
+      <section aria-labelledby="query-heading" class="rail-card">
+        <h2 id="query-heading">1 · Ask</h2>
+        <label class="field-label" for="query-input">Natural-language query</label>
+        <textarea id="query-input" rows="3">Who should I contact before Giving Day, why now, and with what action?</textarea>
+        <p class="hint">Typed filters below are derived from the query. They are validated selects and ranges — never executable text.</p>
+        <div class="chips" id="active-chips" aria-live="polite" aria-label="Active typed filters"></div>
+      </section>
+
+      <section aria-labelledby="filters-heading" class="rail-card">
+        <h2 id="filters-heading">Typed filters</h2>
+        <div class="filter-grid">
+          <fieldset>
+            <legend>Affiliation</legend>
+            <label><input type="checkbox" name="affiliation" value="alumni" checked /> Alumni</label>
+            <label><input type="checkbox" name="affiliation" value="parent" checked /> Parent</label>
+            <label><input type="checkbox" name="affiliation" value="friend" checked /> Friend</label>
+            <label><input type="checkbox" name="affiliation" value="trustee" /> Trustee</label>
+            <label><input type="checkbox" name="affiliation" value="employee" /> Employee</label>
+          </fieldset>
+          <div class="field-row">
+            <div>
+              <label class="field-label" for="class-min">Class year from</label>
+              <input id="class-min" inputmode="numeric" placeholder="e.g. 1985" />
+            </div>
+            <div>
+              <label class="field-label" for="class-max">to</label>
+              <input id="class-max" inputmode="numeric" placeholder="e.g. 2024" />
+            </div>
+          </div>
+          <div>
+            <label class="field-label" for="city-input">City / metro</label>
+            <input id="city-input" type="text" placeholder="e.g. Boston" autocomplete="off" />
+          </div>
+          <div>
+            <label class="field-label" for="activity-select">Activity</label>
+            <select id="activity-select">
+              <option value="">Any activity</option>
+              <option>Alumni Association</option>
+              <option>Crew</option>
+              <option>Debate Society</option>
+              <option>First-gen Network</option>
+              <option>Reunion Committee</option>
+              <option>Young Alumni Council</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="field-label" for="paid-since">Paid gift since</label>
+              <input id="paid-since" type="date" max="2026-08-31" />
+            </div>
+            <div>
+              <label class="field-label" for="min-paid">Min paid total ($)</label>
+              <input id="min-paid" inputmode="numeric" placeholder="e.g. 250" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="field-label" for="email-status">Email</label>
+              <select id="email-status">
+                <option value="deliverable">deliverable</option>
+                <option value="">any (see Excluded tray)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="phone-status">Phone</label>
+              <select id="phone-status">
+                <option value="">either channel</option>
+                <option value="available">available</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div>
+              <label class="field-label" for="staff-id">Assigned staff #</label>
+              <input id="staff-id" inputmode="numeric" placeholder="optional" />
+            </div>
+            <div>
+              <label class="field-label" for="campaign-type">Campaign</label>
+              <select id="campaign-type"><option value="giving_day" selected>giving_day</option></select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="rubric-heading" class="rail-card">
+        <h2 id="rubric-heading">Rubric <span class="pill" id="rank-mode-pill" hidden></span></h2>
+        <p class="hint">Weight edits rerank only. Threshold or unknown-policy edits rescore the affected criterion.</p>
+        <div id="rubric-rows"></div>
+      </section>
+
+      <section aria-labelledby="asof-heading" class="rail-card">
+        <h2 id="asof-heading">As-of + Run</h2>
+        <label class="field-label" for="asof-input">Reference date T0 (≤ 2026-08-31)</label>
+        <input id="asof-input" type="date" value="2026-08-31" max="2026-08-31" />
+        <p class="field-error" id="asof-error" role="alert" hidden>As-of must be on or before 2026-08-31. Features cannot look past the dataset snapshot.</p>
+        <div class="run-row">
+          <button type="button" class="btn btn-primary" id="run-btn">Run triage</button>
+          <button type="button" class="btn btn-ghost" id="cancel-btn" disabled>Cancel</button>
+        </div>
+        <ol class="progress" id="progress" aria-label="Background job progress">
+          <li data-stage="filter">Filtering eligible</li>
+          <li data-stage="score">Scoring criteria</li>
+          <li data-stage="rank">Ranking top-20</li>
+          <li data-stage="evidence">Linking evidence</li>
+        </ol>
+        <p class="hint" id="progress-hint" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="gates-heading" class="rail-card">
+        <h2 id="gates-heading">Eligibility gates</h2>
+        <ul class="gates" id="gates">
+          <li><span class="gate-dot" aria-hidden="true"></span>Contactable <b data-gate="contactable">—</b></li>
+          <li><span class="gate-dot" aria-hidden="true"></span>Not deceased <b data-gate="alive">—</b></li>
+          <li><span class="gate-dot" aria-hidden="true"></span>Not do-not-solicit <b data-gate="suppressible">—</b></li>
+          <li><span class="gate-dot" aria-hidden="true"></span>MGO-assignable <b data-gate="mgo">—</b></li>
+        </ul>
+      </section>
+    </aside>
+
+    <!-- CENTER -->
+    <main class="worklist-pane" aria-labelledby="worklist-heading">
+      <div class="worklist-head">
+        <div>
+          <h1 id="worklist-heading">Top 20 to contact before Giving Day</h1>
+          <p class="worklist-sub" id="worklist-sub">Ranked worklist · priority index (rank only, never a probability)</p>
+        </div>
+        <div class="worklist-tools" role="group" aria-label="Worklist tools">
+          <label class="toggle"><input type="checkbox" id="review-toggle" /> Review-needed only <span class="count-badge" id="review-count">0</span></label>
+          <button type="button" class="btn btn-ghost" id="excluded-open-btn" aria-haspopup="dialog">Excluded <span class="count-badge" id="excluded-count">0</span></button>
+          <label class="toggle" for="evidence-sort">Sort
+            <select id="evidence-sort">
+              <option value="rank">Rank (default)</option>
+              <option value="evidence">Evidence completeness</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="review-banner" id="review-banner" role="status" hidden></div>
+      <div class="job-note" id="job-note" aria-live="polite"></div>
+
+      <div class="loading" id="loading-state" hidden>
+        <div class="skeleton-row" aria-hidden="true"></div><div class="skeleton-row" aria-hidden="true"></div>
+        <div class="skeleton-row" aria-hidden="true"></div><div class="skeleton-row" aria-hidden="true"></div>
+        <p>Scoring… provisional rows appear below as they rank. <span class="pill pill-prov">Provisional</span></p>
+      </div>
+
+      <div class="empty" id="empty-state" hidden>
+        <h2>No eligible constituents under these filters</h2>
+        <p id="empty-detail">0 eligible from 0 screened.</p>
+        <div class="empty-actions">
+          <button type="button" class="btn btn-primary" id="empty-clear-btn">Clear contactability filter</button>
+          <button type="button" class="btn btn-ghost" id="empty-excluded-btn">View excluded</button>
+        </div>
+      </div>
+
+      <div class="error-card" id="error-state" role="alert" hidden>
+        <h2>Run failed</h2>
+        <p id="error-detail"></p>
+        <div class="empty-actions">
+          <button type="button" class="btn btn-primary" id="retry-btn">Retry (same cache key)</button>
+          <button type="button" class="btn btn-ghost" id="copy-diag-btn">Copy diagnostics</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="worklist-table" id="worklist-table" aria-label="Ranked Giving Day worklist">
+          <caption class="visually-hidden">Ranked top 20 constituents. Sorted by rank. Priority index is a rank-only score, not a probability.</caption>
+          <thead>
+            <tr>
+              <th scope="col" aria-sort="ascending">Rank</th>
+              <th scope="col">Name · affiliation · class</th>
+              <th scope="col">Why now</th>
+              <th scope="col">Action</th>
+              <th scope="col">Priority index</th>
+              <th scope="col">Evidence</th>
+              <th scope="col">Review</th>
+            </tr>
+          </thead>
+          <tbody id="worklist-body"></tbody>
+        </table>
+      </div>
+      <ol class="worklist-cards" id="worklist-cards" aria-label="Ranked worklist cards"></ol>
+    </main>
+
+    <!-- RIGHT INSPECTOR -->
+    <aside class="inspector" aria-label="Person dossier" id="inspector">
+      <div class="inspector-head">
+        <h2 id="dossier-heading">Dossier</h2>
+        <button type="button" class="btn btn-ghost inspector-back" id="dossier-back-btn">← Worklist</button>
+      </div>
+      <div id="dossier-empty" class="dossier-empty">
+        <p>Select a row to inspect why this person, why now, and the permitted action — with evidence and missing data.</p>
+      </div>
+      <article id="dossier" hidden aria-labelledby="dossier-name">
+        <p class="dossier-rank" id="dossier-rank"></p>
+        <h3 class="dossier-name" id="dossier-name"></h3>
+        <p class="dossier-meta" id="dossier-meta"></p>
+        <div class="four-state" id="four-state" aria-label="Four-state honesty strip"></div>
+        <div class="tabs" role="tablist" aria-label="Dossier sections" id="dossier-tabs">
+          <button role="tab" id="tab-whyperson" aria-controls="panel-whyperson" aria-selected="true">Why person</button>
+          <button role="tab" id="tab-whynow" aria-controls="panel-whynow" aria-selected="false" tabindex="-1">Why now</button>
+          <button role="tab" id="tab-action" aria-controls="panel-action" aria-selected="false" tabindex="-1">Action</button>
+          <button role="tab" id="tab-evidence" aria-controls="panel-evidence" aria-selected="false" tabindex="-1">Evidence</button>
+          <button role="tab" id="tab-missing" aria-controls="panel-missing" aria-selected="false" tabindex="-1">Missing</button>
+        </div>
+        <section role="tabpanel" id="panel-whyperson" aria-labelledby="tab-whyperson" tabindex="0"></section>
+        <section role="tabpanel" id="panel-whynow" aria-labelledby="tab-whynow" tabindex="0" hidden></section>
+        <section role="tabpanel" id="panel-action" aria-labelledby="tab-action" tabindex="0" hidden></section>
+        <section role="tabpanel" id="panel-evidence" aria-labelledby="tab-evidence" tabindex="0" hidden></section>
+        <section role="tabpanel" id="panel-missing" aria-labelledby="tab-missing" tabindex="0" hidden></section>
+      </article>
+    </aside>
+  </div>
+
+  <nav class="mobile-tabs" aria-label="Primary">
+    <button type="button" data-tab="ask" aria-current="false">Ask</button>
+    <button type="button" data-tab="worklist" aria-current="page">Worklist <span class="count-badge" id="mobile-count">20</span></button>
+    <button type="button" data-tab="dossier" aria-current="false">Dossier</button>
+    <button type="button" data-tab="receipt" aria-current="false">Receipt</button>
+  </nav>
+
+  <!-- RECEIPT DRAWER -->
+  <div class="scrim" id="receipt-scrim" hidden></div>
+  <section class="drawer" id="receipt-drawer" role="dialog" aria-modal="true" aria-labelledby="receipt-heading" hidden>
+    <div class="drawer-head">
+      <h2 id="receipt-heading">Cost receipt</h2>
+      <button type="button" class="btn btn-ghost" id="receipt-close-btn">Close ✕</button>
+    </div>
+    <dl class="receipt-grid" id="receipt-grid"></dl>
+    <h3>Backtest delta (top-20 vs paid-only RFM baseline)</h3>
+    <p class="hint">Descriptive on synthetic data. Never a revenue promise.</p>
+    <table class="mini-table" aria-label="Backtest delta">
+      <thead><tr><th scope="col">Metric</th><th scope="col">Triage</th><th scope="col">RFM baseline</th></tr></thead>
+      <tbody id="backtest-body"></tbody>
+    </table>
+    <div class="empty-actions">
+      <button type="button" class="btn btn-primary" id="copy-receipt-btn">Copy receipt JSON</button>
+    </div>
+  </section>
+
+  <!-- EXCLUDED TRAY -->
+  <div class="scrim" id="excluded-scrim" hidden></div>
+  <section class="drawer" id="excluded-drawer" role="dialog" aria-modal="true" aria-labelledby="excluded-heading" hidden>
+    <div class="drawer-head">
+      <h2 id="excluded-heading">Excluded — never silently dropped</h2>
+      <button type="button" class="btn btn-ghost" id="excluded-close-btn">Close ✕</button>
+    </div>
+    <p class="hint">Deterministic gates ran before any scoring. Excluded rows keep their reason and stay out of the ranked top-20.</p>
+    <ol class="excluded-list" id="excluded-list"></ol>
+  </section>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <div class="visually-hidden" aria-live="polite" id="sr-progress"></div>
+  <div class="visually-hidden" aria-live="assertive" id="sr-alerts"></div>
+  <section id="smoke-panel" class="smoke" hidden aria-label="Browser smoke results"></section>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
